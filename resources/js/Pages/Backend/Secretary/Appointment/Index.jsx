@@ -3,12 +3,14 @@ import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import PaginatedTable from '@/Components/Backend/PaginatedTable.jsx';
 import Swal from 'sweetalert2';
 import { useState } from 'react';
+import { FaHourglassHalf, FaCheckCircle, FaTimesCircle, FaCalendarAlt } from 'react-icons/fa';
 
 export default function IndexAppointments() {
-    const { appointments } = usePage().props;
+    const { appointments, filters } = usePage().props;
+    const { search: initialSearch = '', status: initialStatus = '', stats } = filters;
 
-    const [search, setSearch] = useState('');
-    const [status, setStatus] = useState('');
+    const [search, setSearch] = useState(initialSearch);
+    const [status, setStatus] = useState(initialStatus);
 
     const handleDelete = (id) => {
         Swal.fire({
@@ -48,6 +50,37 @@ export default function IndexAppointments() {
         e.preventDefault();
         router.get(route('secretary.appointments.index'), { search, status }, { preserveState: true, replace: true });
     };
+
+    const statusCards = [
+        {
+            title: 'Consultas Solicitadas',
+            value: stats?.pending ?? 0,
+            description: 'Aguardando aprovação/pagamento',
+            icon: <FaHourglassHalf className="text-yellow-500 text-5xl group-hover:text-white transition-colors" />,
+            href: route('secretary.appointments.index', { status: 'solicitado' }),
+        },
+        {
+            title: 'Consultas Aprovadas',
+            value: stats?.approved ?? 0,
+            description: 'Total de consultas confirmadas',
+            icon: <FaCheckCircle className="text-green-500 text-5xl group-hover:text-white transition-colors" />,
+            href: route('secretary.appointments.index', { status: 'aprovado' }),
+        },
+        {
+            title: 'Consultas Canceladas',
+            value: stats?.cancelled ?? 0,
+            description: 'Total de consultas canceladas',
+            icon: <FaTimesCircle className="text-red-500 text-5xl group-hover:text-white transition-colors" />,
+            href: route('secretary.appointments.index', { status: 'cancelado' }),
+        },
+        {
+            title: 'Consultas Concluídas',
+            value: stats?.completed ?? 0,
+            description: 'Atendimentos finalizados',
+            icon: <FaCalendarAlt className="text-blue-500 text-5xl group-hover:text-white transition-colors" />,
+            href: route('secretary.appointments.index', { status: 'concluido' }),
+        },
+    ];
 
     const columns = [
         { label: 'ID', key: 'id' },
@@ -90,7 +123,8 @@ export default function IndexAppointments() {
 
     return (
         <DashboardLayout title="Agendamentos">
-            <div className="max-w-7xl mx-auto px-4 py-10">
+            <div className="max-w-7xl mx-auto px-4 py-10 space-y-8">
+
                 <div className="flex justify-between items-center mb-6">
                     <Link
                         href={route('secretary.dashboard')}
@@ -99,24 +133,40 @@ export default function IndexAppointments() {
                         &larr; Voltar
                     </Link>
                 </div>
+                {/* === CARDS DE STATUS === */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {statusCards.map((card, index) => (
+                        <Link
+                            key={index}
+                            href={card.href}
+                            className="group bg-white dark:bg-gray-800 rounded-xl shadow-md hover:bg-primary hover:text-white transition-colors p-6 flex flex-col justify-between"
+                        >
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold">{card.title}</h3>
+                                    <p className="text-sm text-gray-500 group-hover:text-gray-100">{card.description}</p>
+                                </div>
+                                {card.icon}
+                            </div>
+                            <p className="text-3xl font-bold">{card.value}</p>
+                        </Link>
+                    ))}
+                </div>
 
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl">
-                        <div className="grid grid-cols-12 gap-4 items-center mb-6">
-                            <h2 className="col-span-12 md:col-span-6 text-2xl font-semibold text-gray-800 dark:text-gray-100">
-                                Agendamentos
-                            </h2>
+                    <div className="grid grid-cols-12 gap-4 items-center mb-6">
+                        <h2 className="col-span-12 md:col-span-6 text-2xl font-semibold text-gray-800 dark:text-gray-100">
+                            Agendamentos
+                        </h2>
 
-                            <Link
-                                href={route('secretary.appointments.create')}
-                                className="col-span-12 md:col-span-6 justify-self-end bg-primary text-white px-4
-                                 py-2 rounded hover:bg-primary-dark transition text-center md:text-right w-full md:w-auto"
-                            >
-                                Novo Agendamento
-                            </Link>
-                        </div>
+                        <Link
+                            href={route('secretary.appointments.create')}
+                            className="col-span-12 md:col-span-6 justify-self-end bg-primary text-white px-4
+                             py-2 rounded hover:bg-primary-dark transition text-center md:text-right w-full md:w-auto"
+                        >
+                            Novo Agendamento
+                        </Link>
                     </div>
-
 
                     {/* Filtros */}
                     <form onSubmit={handleFilter} className="flex flex-col sm:flex-row gap-4 mb-6">

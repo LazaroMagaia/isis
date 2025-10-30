@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use App\Models\Secretary\Appointment;
 use App\Models\Admin\Service;
 use Illuminate\Support\Facades\Auth;
+
 class AppointmentController extends Controller
 {
     protected $route = 'Backend/Secretary/Appointment';
@@ -28,16 +29,21 @@ class AppointmentController extends Controller
             ->latest()
             ->paginate(10)
             ->withQueryString(); // mantém os filtros na paginação
-
+        $stats = [
+            'approved' => Appointment::where('status', 'aprovado')->count(),
+            'cancelled' => Appointment::where('status', 'cancelado')->count(),
+            'pending' => Appointment::whereIn('status', ['solicitado', 'aguardando_pagamento'])->count(),
+            'completed' => Appointment::where('status', 'concluido')->count(),
+        ];
         return Inertia::render($this->route . '/Index', [
             'appointments' => $appointments,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'stats' => $stats,
             ],
         ]);
     }
-
 
     public function create()
     {
