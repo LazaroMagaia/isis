@@ -22,6 +22,8 @@ Route::prefix('admin')
         Route::get('/team/{team}/edit', [TeamController::class, 'edit'])->name('team.edit');
         Route::put('/team/{team}', [TeamController::class, 'update'])->name('team.update');
         Route::delete('/team/{team}', [TeamController::class, 'destroy'])->name('team.destroy');
+        //Patient
+        Route::get('/patient', [AdminController::class, 'patient'])->name('patient.index');
         // Services and Categories
         Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
         Route::get('/services/create', [ServiceController::class, 'create'])->name('services.create');

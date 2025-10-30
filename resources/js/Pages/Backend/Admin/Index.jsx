@@ -9,7 +9,7 @@ export default function Dashboard() {
             value: 120,
             description: 'Total de pacientes registrados',
             icon: <FaUserFriends className="text-primary text-5xl group-hover:text-white transition-colors" />,
-            href: route('admin.dashboard'), // usando route()
+            href: route('admin.patient.index'), // usando route()
         },
         {
             title: 'Equipe',
