@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Secretary;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Inertia\Inertia;
 use App\Models\Secretary\Appointment;
 use App\Models\Admin\Service;
@@ -17,7 +18,7 @@ class AppointmentController extends Controller
     {
         $search = request()->get('search', '');
         $status = request()->get('status', '');
-
+        $totalAppointment = Appointment::count();
         $appointments = Appointment::with(['patient', 'doctor', 'service'])
             ->when($search, function ($query, $search) {
                 $query->whereHas('patient', fn($q) => $q->where('name', 'like', "%$search%"))
@@ -37,6 +38,7 @@ class AppointmentController extends Controller
         ];
         return Inertia::render($this->route . '/Index', [
             'appointments' => $appointments,
+            'totalAppointment'=>$totalAppointment,
             'filters' => [
                 'search' => $search,
                 'status' => $status,

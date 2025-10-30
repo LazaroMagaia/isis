@@ -3,10 +3,9 @@ import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import PaginatedTable from '@/Components/Backend/PaginatedTable.jsx';
 import Swal from 'sweetalert2';
 import { useState } from 'react';
-import { FaHourglassHalf, FaCheckCircle, FaTimesCircle, FaCalendarAlt } from 'react-icons/fa';
 
 export default function IndexAppointments() {
-    const { appointments, filters } = usePage().props;
+    const { appointments, filters,totalAppointment } = usePage().props;
     const { search: initialSearch = '', status: initialStatus = '', stats } = filters;
 
     const [search, setSearch] = useState(initialSearch);
@@ -51,80 +50,17 @@ export default function IndexAppointments() {
         router.get(route('secretary.appointments.index'), { search, status }, { preserveState: true, replace: true });
     };
 
-    const statusCards = [
-        {
-            title: 'Consultas Solicitadas',
-            value: stats?.pending ?? 0,
-            description: 'Aguardando aprovação/pagamento',
-            icon: <FaHourglassHalf className="text-yellow-500 text-5xl group-hover:text-white transition-colors" />,
-            href: route('secretary.appointments.index', { status: 'solicitado' }),
-        },
-        {
-            title: 'Consultas Aprovadas',
-            value: stats?.approved ?? 0,
-            description: 'Total de consultas confirmadas',
-            icon: <FaCheckCircle className="text-green-500 text-5xl group-hover:text-white transition-colors" />,
-            href: route('secretary.appointments.index', { status: 'aprovado' }),
-        },
-        {
-            title: 'Consultas Canceladas',
-            value: stats?.cancelled ?? 0,
-            description: 'Total de consultas canceladas',
-            icon: <FaTimesCircle className="text-red-500 text-5xl group-hover:text-white transition-colors" />,
-            href: route('secretary.appointments.index', { status: 'cancelado' }),
-        },
-        {
-            title: 'Consultas Concluídas',
-            value: stats?.completed ?? 0,
-            description: 'Atendimentos finalizados',
-            icon: <FaCalendarAlt className="text-blue-500 text-5xl group-hover:text-white transition-colors" />,
-            href: route('secretary.appointments.index', { status: 'concluido' }),
-        },
-    ];
-
-    const columns = [
-        { label: 'ID', key: 'id' },
-        {
-            label: 'Paciente',
-            render: appointment => appointment.patient?.name || '-',
-        },
-        {
-            label: 'Médico',
-            render: appointment => appointment.doctor?.name || '-',
-        },
-        {
-            label: 'Serviço',
-            render: appointment => appointment.service?.name || '-',
-        },
-        { label: 'Data', key: 'date' },
-        { label: 'Hora', key: 'time' },
-        { label: 'Status', key: 'status' },
-        {
-            label: 'Ações',
-            align: 'right',
-            render: (appointment) => (
-                <div className="text-right">
-                    <Link
-                        href={route('secretary.appointments.edit', appointment.id)}
-                        className="text-primary hover:underline mr-4"
-                    >
-                        Editar
-                    </Link>
-                    <button
-                        onClick={() => handleDelete(appointment.id)}
-                        className="text-red-500 hover:underline"
-                    >
-                        Cancelar
-                    </button>
-                </div>
-            )
-        }
-    ];
+    const statusColors = {
+        solicitado: 'bg-yellow-200 text-yellow-800',
+        aprovado: 'bg-green-200 text-green-800',
+        cancelado: 'bg-red-200 text-red-800',
+        concluido: 'bg-blue-200 text-blue-800',
+    };
 
     return (
         <DashboardLayout title="Agendamentos">
             <div className="max-w-7xl mx-auto px-4 py-10 space-y-8">
-
+                {/* Voltar */}
                 <div className="flex justify-between items-center mb-6">
                     <Link
                         href={route('secretary.dashboard')}
@@ -134,25 +70,38 @@ export default function IndexAppointments() {
                     </Link>
                 </div>
                 {/* === CARDS DE STATUS === */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {statusCards.map((card, index) => (
-                        <Link
-                            key={index}
-                            href={card.href}
-                            className="group bg-white dark:bg-gray-800 rounded-xl shadow-md hover:bg-primary hover:text-white transition-colors p-6 flex flex-col justify-between"
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <h3 className="text-lg font-semibold">{card.title}</h3>
-                                    <p className="text-sm text-gray-500 group-hover:text-gray-100">{card.description}</p>
-                                </div>
-                                {card.icon}
+                <div className="grid grid-cols-12 gap-6">
+
+                    {/* Card Total */}
+                    <div className="col-span-12 md:col-span-4 lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl shadow
+                        p-6 flex flex-col items-center justify-center">
+                        <p className="text-gray-500 dark:text-gray-300">Total de Agendamentos</p>
+                        <span className="text-3xl font-bold text-gray-800 dark:text-white">{totalAppointment}</span>
+                    </div>
+
+                    {/* Cards por status */}
+                    {Object.entries(stats).map(([key, value]) => {
+                        let statusKey = '';
+                        switch(key){
+                            case 'approved': statusKey = 'aprovado'; break;
+                            case 'cancelled': statusKey = 'cancelado'; break;
+                            case 'pending': statusKey = 'solicitado'; break;
+                            case 'completed': statusKey = 'concluido'; break;
+                            default: statusKey = key;
+                        }
+                        return (
+                            <div
+                                key={key}
+                                className={`col-span-6 md:col-span-4 lg:col-span-2 rounded-xl shadow p-6 flex flex-col items-center justify-center ${statusColors[statusKey] || 'bg-gray-200 text-gray-800'}`}
+                            >
+                                <p className="capitalize font-semibold">{statusKey.replace('_', ' ')}</p>
+                                <span className="text-2xl font-bold">{value}</span>
                             </div>
-                            <p className="text-3xl font-bold">{card.value}</p>
-                        </Link>
-                    ))}
+                        );
+                    })}
                 </div>
 
+                {/* Título + Novo */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
                     <div className="grid grid-cols-12 gap-4 items-center mb-6">
                         <h2 className="col-span-12 md:col-span-6 text-2xl font-semibold text-gray-800 dark:text-gray-100">
@@ -197,7 +146,25 @@ export default function IndexAppointments() {
                         </button>
                     </form>
 
-                    <PaginatedTable columns={columns} data={appointments.data} links={appointments.links} />
+                    <PaginatedTable columns={[
+                        { label: 'ID', key: 'id' },
+                        { label: 'Paciente', render: a => a.patient?.name || '-' },
+                        { label: 'Médico', render: a => a.doctor?.name || '-' },
+                        { label: 'Serviço', render: a => a.service?.name || '-' },
+                        { label: 'Data', key: 'date' },
+                        { label: 'Hora', key: 'time' },
+                        { label: 'Status', key: 'status' },
+                        {
+                            label: 'Ações',
+                            align: 'right',
+                            render: (a) => (
+                                <div className="text-right">
+                                    <Link href={route('secretary.appointments.edit', a.id)} className="text-primary hover:underline mr-4">Editar</Link>
+                                    <button onClick={() => handleDelete(a.id)} className="text-red-500 hover:underline">Cancelar</button>
+                                </div>
+                            )
+                        }
+                    ]} data={appointments.data} links={appointments.links} />
                 </div>
             </div>
         </DashboardLayout>
