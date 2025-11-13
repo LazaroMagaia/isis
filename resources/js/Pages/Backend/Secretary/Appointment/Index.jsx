@@ -1,11 +1,12 @@
 import { usePage, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import PaginatedTable from '@/Components/Backend/PaginatedTable.jsx';
+import { EditIcon, DeleteIcon } from "@/Components/Backend/HeroIcons";
 import Swal from 'sweetalert2';
 import { useState } from 'react';
 
 export default function IndexAppointments() {
-    const { appointments, filters,totalAppointment } = usePage().props;
+    const { appointments, filters } = usePage().props;
     const { search: initialSearch = '', status: initialStatus = '', stats } = filters;
 
     const [search, setSearch] = useState(initialSearch);
@@ -70,17 +71,17 @@ export default function IndexAppointments() {
                     </Link>
                 </div>
                 {/* === CARDS DE STATUS === */}
-                <div className="grid grid-cols-12 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6">
 
                     {/* Card Total */}
-                    <div className="col-span-12 md:col-span-4 lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl shadow
-                        p-6 flex flex-col items-center justify-center">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex flex-col items-center justify-center">
                         <p className="text-gray-500 dark:text-gray-300">Total de Agendamentos</p>
-                        <span className="text-3xl font-bold text-gray-800 dark:text-white">{totalAppointment}</span>
+                        <span className="text-3xl font-bold text-gray-800 dark:text-white">{appointments.total}</span>
                     </div>
 
                     {/* Cards por status */}
                     {Object.entries(stats).map(([key, value]) => {
+                        // Mapear chaves do backend para nomes de status
                         let statusKey = '';
                         switch(key){
                             case 'approved': statusKey = 'aprovado'; break;
@@ -92,7 +93,7 @@ export default function IndexAppointments() {
                         return (
                             <div
                                 key={key}
-                                className={`col-span-6 md:col-span-4 lg:col-span-2 rounded-xl shadow p-6 flex flex-col items-center justify-center ${statusColors[statusKey] || 'bg-gray-200 text-gray-800'}`}
+                                className={`rounded-xl shadow p-6 flex flex-col items-center justify-center ${statusColors[statusKey] || 'bg-gray-200 text-gray-800'}`}
                             >
                                 <p className="capitalize font-semibold">{statusKey.replace('_', ' ')}</p>
                                 <span className="text-2xl font-bold">{value}</span>
@@ -124,12 +125,14 @@ export default function IndexAppointments() {
                             placeholder="Pesquisar por paciente, médico ou serviço"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="border rounded px-4 py-2 w-full sm:w-1/2 dark:bg-gray-700 dark:text-white"
+                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700
+                                dark:text-white focus:ring-primary focus:border-primary"
                         />
                         <select
                             value={status}
                             onChange={(e) => setStatus(e.target.value)}
-                            className="border rounded px-4 py-2 w-full sm:w-1/3 dark:bg-gray-700 dark:text-white"
+                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700
+                                dark:text-white focus:ring-primary focus:border-primary"
                         >
                             <option value="">Todos os status</option>
                             <option value="solicitado">Solicitado</option>
@@ -152,15 +155,24 @@ export default function IndexAppointments() {
                         { label: 'Médico', render: a => a.doctor?.name || '-' },
                         { label: 'Serviço', render: a => a.service?.name || '-' },
                         { label: 'Data', key: 'date' },
-                        { label: 'Hora', key: 'time' },
+                        { 
+                            label: 'Hora', 
+                            render: a => a.slot ? `${a.slot.start_time.slice(0,5)} - ${a.slot.end_time.slice(0,5)}` : '-'
+                        },
                         { label: 'Status', key: 'status' },
                         {
                             label: 'Ações',
                             align: 'right',
                             render: (a) => (
-                                <div className="text-right">
-                                    <Link href={route('secretary.appointments.edit', a.id)} className="text-primary hover:underline mr-4">Editar</Link>
-                                    <button onClick={() => handleDelete(a.id)} className="text-red-500 hover:underline">Cancelar</button>
+                                <div className="flex justify-end items-center">
+                                    <Link href={route('secretary.appointments.edit', a.id)}
+                                          className="text-primary hover:underline mr-4">
+                                        <EditIcon/>
+                                    </Link>
+                                    <button onClick={() => handleDelete(a.id)} className="text-red-500
+                                     hover:underline">
+                                        <DeleteIcon/>
+                                    </button>
                                 </div>
                             )
                         }

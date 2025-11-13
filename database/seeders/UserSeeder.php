@@ -50,6 +50,7 @@ class UserSeeder extends Seeder
             'name' => 'Ana Pereira',
             'email' => 'patient@example.com',
             'phone_1' => '840000005',
+            'patient_id'=>'250001',
             'password' => Hash::make('password123'),
         ]);
     }

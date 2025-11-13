@@ -11,7 +11,7 @@ export default function IndexUsers() {
     const [role, setRole] = useState(filters.role || '');
 
     const columns = [
-        { label: 'ID', key: 'id' },
+        { label: 'Processo', key: 'patient_id' },
         { label: 'Nome', key: 'name' },
         { label: 'Email', key: 'email' },
         { label: 'Telefone', key: 'phone_1' },
@@ -23,7 +23,7 @@ export default function IndexUsers() {
     };
 
     return (
-        <DashboardLayout title="Equipe">
+        <DashboardLayout title="Pacientes">
             <div className="max-w-7xl mx-auto px-4 py-10">
                 <div className="flex justify-between items-center mb-6">
                     <Link href={route('admin.dashboard')} className="text-gray-600 dark:text-gray-300 hover:underline">

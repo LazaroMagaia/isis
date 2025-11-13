@@ -16,7 +16,7 @@ return new class extends Migration
 
             // Role / user type
             $table->enum('role', ['admin', 'doctor', 'nurse', 'secretary', 'patient'])->default('patient');
-
+            $table->unsignedBigInteger('patient_id')->nullable()->comment('Número do processo do paciente');
             // Basic information
             $table->string('name');
             $table->string('father_name')->nullable();

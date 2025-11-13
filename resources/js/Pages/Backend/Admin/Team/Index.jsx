@@ -1,7 +1,9 @@
 import { usePage, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import PaginatedTable from '@/Components/Backend/PaginatedTable.jsx';
+import { EditIcon, DeleteIcon } from "@/Components/Backend/HeroIcons";
 import { useState } from 'react';
+import { FaEdit, FaTrash } from "react-icons/fa";
 import Swal from 'sweetalert2';
 
 export default function IndexUsers() {
@@ -56,23 +58,23 @@ export default function IndexUsers() {
         { label: 'Nome', key: 'name' },
         { label: 'Email', key: 'email' },
         { label: 'Telefone', key: 'phone_1' },
-        { label: 'Role', key: 'role' },
+        { label: 'Função', key: 'role', render: user => rolesPT[user.role] || user.role },
         {
             label: 'Ações',
             align: 'right',
             render: user => (
-                <div className="text-right">
+                <div className="flex justify-end items-center">
                     <Link
                         href={route('admin.team.edit', user.id)}
                         className="text-primary hover:underline mr-4"
                     >
-                        Editar
+                    <EditIcon/>
                     </Link>
                     <button
                         onClick={() => handleDelete(user.id)}
                         className="text-red-500 hover:underline"
                     >
-                        Excluir
+                      <DeleteIcon/>
                     </button>
                 </div>
             )

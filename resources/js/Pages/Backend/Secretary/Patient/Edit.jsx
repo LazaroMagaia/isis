@@ -6,71 +6,162 @@ import countries from '@/nationalities';
 import Swal from 'sweetalert2';
 
 export default function EditUser() {
-    const { errors, user } = usePage().props; // user vindo do backend
+    const { errors: serverErrors, user } = usePage().props;
+
+    const [step, setStep] = useState(1);
 
     const [values, setValues] = useState({
-        email: '',
-        role: 'doctor',
+        role: 'patient',
         name: '',
         father_name: '',
         mother_name: '',
         gender: '',
         nationality: '',
         birth_date: '',
+        identification_type: '',
+        identification_number: '',
+        address: '',
+        province: '',
         phone_1: '',
+        phone_2: '',
+        marital_status: '',
+        sexual_orientation: '',
+        emergency_contact_1_name: '',
+        emergency_contact_1_address: '',
+        emergency_contact_1_relationship: '',
+        emergency_contact_1_phone: '',
+        emergency_contact_1_fax: '',
+        emergency_contact_2_name: '',
+        emergency_contact_2_address: '',
+        emergency_contact_2_relationship: '',
+        emergency_contact_2_phone: '',
+        emergency_contact_2_fax: '',
+        insurance_name: '',
+        insurance_number: '',
+        insurance_provider: '',
+        email: '',
     });
 
-    // Preencher os valores iniciais ao carregar o usuário
+    const [clientErrors, setClientErrors] = useState({});
+
     useEffect(() => {
         if (user) {
             setValues({
-                email: user.email || '',
+                role: user.role || 'patient',
                 name: user.name || '',
                 father_name: user.father_name || '',
                 mother_name: user.mother_name || '',
                 gender: user.gender || '',
                 nationality: user.nationality || '',
                 birth_date: user.birth_date
-                    ? new Date(user.birth_date).toISOString().slice(0, 10) // YYYY-MM-DD
+                    ? new Date(user.birth_date).toISOString().slice(0, 10)
                     : '',
+                identification_type: user.identification_type || '',
+                identification_number: user.identification_number || '',
+                address: user.address || '',
+                province: user.province || '',
                 phone_1: user.phone_1 || '',
+                phone_2: user.phone_2 || '',
+                marital_status: user.marital_status || '',
+                sexual_orientation: user.sexual_orientation || '',
+                emergency_contact_1_name: user.emergency_contact_1_name || '',
+                emergency_contact_1_address: user.emergency_contact_1_address || '',
+                emergency_contact_1_relationship: user.emergency_contact_1_relationship || '',
+                emergency_contact_1_phone: user.emergency_contact_1_phone || '',
+                emergency_contact_1_fax: user.emergency_contact_1_fax || '',
+                emergency_contact_2_name: user.emergency_contact_2_name || '',
+                emergency_contact_2_address: user.emergency_contact_2_address || '',
+                emergency_contact_2_relationship: user.emergency_contact_2_relationship || '',
+                emergency_contact_2_phone: user.emergency_contact_2_phone || '',
+                emergency_contact_2_fax: user.emergency_contact_2_fax || '',
+                insurance_name: user.insurance_name || '',
+                insurance_number: user.insurance_number || '',
+                insurance_provider: user.insurance_provider || '',
+                email: user.email || '',
             });
         }
     }, [user]);
 
     const handleChange = (e) => {
-        setValues({
-            ...values,
-            [e.target.name]: e.target.value,
-        });
+        const { name, value } = e.target;
+        setValues((prev) => ({ ...prev, [name]: value }));
+        setClientErrors((prev) => ({ ...prev, [name]: undefined }));
     };
+
+    const requiredPerStep = {
+        1: ['name', 'email'],
+        2: ['gender', 'birth_date', 'nationality'],
+        3: ['identification_type', 'identification_number'],
+        4: ['address', 'province', 'phone_1'],
+    };
+
+    const validateStep = (currentStep) => {
+        const required = requiredPerStep[currentStep] || [];
+        const newClientErrors = {};
+        required.forEach((field) => {
+            const val = values[field];
+            if (!val || String(val).trim() === '') {
+                newClientErrors[field] = 'Campo obrigatório';
+            }
+        });
+        setClientErrors((prev) => ({ ...prev, ...newClientErrors }));
+        return Object.keys(newClientErrors).length === 0;
+    };
+
+    const nextStep = () => {
+        if (validateStep(step)) setStep((s) => Math.min(s + 1, 8));
+    };
+
+    const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        let allOk = true;
+        for (let s = 1; s <= 8; s++) if (!validateStep(s)) allOk = false;
+        if (!allOk) {
+            setStep(1);
+            Swal.fire({
+                icon: 'error',
+                title: 'Campos faltando',
+                text: 'Preencha os campos obrigatórios antes de enviar.',
+                confirmButtonColor: '#8B57A4',
+            });
+            return;
+        }
 
         router.put(route('secretary.patient.update', user.id), values, {
             onSuccess: () => {
                 Swal.fire({
                     icon: 'success',
                     title: 'Usuário atualizado!',
-                    text: 'As informações do usuário foram atualizadas com sucesso.',
                     confirmButtonColor: '#8B57A4',
-                }).then(() => {
-                    router.visit(route('secretary.patient.index'));
-                });
+                }).then(() => router.visit(route('secretary.patient.index')));
             },
             onError: () => {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Erro',
-                    text: 'Ocorreu um problema ao atualizar o usuário. Verifique os campos.',
+                    title: 'Erro ao atualizar paciente',
                     confirmButtonColor: '#8B57A4',
                 });
             },
         });
     };
+
+    const getError = (field) => serverErrors?.[field] || clientErrors?.[field];
+
+    const stepsLabel = [
+        '1. Conta & Básicos',
+        '2. Pessoais',
+        '3. Identificação',
+        '4. Endereço & Contato',
+        '5. Detalhes Pessoais',
+        '6. Emergência 1',
+        '7. Emergência 2',
+        '8. Seguro',
+    ];
+
     return (
-        <DashboardLayout title="Editar Usuário">
+        <DashboardLayout title="Editar Paciente">
             <div className="max-w-7xl mx-auto px-4 py-10">
                 <div className="flex justify-between items-center mb-6">
                     <Link
@@ -79,6 +170,9 @@ export default function EditUser() {
                     >
                         &larr; Voltar
                     </Link>
+                    <div className="text-sm text-gray-500">
+                        Etapa {step} de 8 — {stepsLabel[step - 1]}
+                    </div>
                 </div>
 
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
@@ -86,111 +180,443 @@ export default function EditUser() {
                         Editar Paciente
                     </h2>
 
-                    <form
-                        onSubmit={handleSubmit}
-                        className="grid grid-cols-12 gap-6"
-                    >
-                        <div className="col-span-12 md:col-span-6">
-                            <Form
-                                type="text"
-                                label="Nome"
-                                name="name"
-                                value={values.name}
-                                onChange={handleChange}
-                                error={errors.name}
-                                required
+                    <div className="mb-6">
+                        <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                            <div
+                                className="bg-primary h-2 rounded-full"
+                                style={{ width: `${(step / 8) * 100}%` }}
                             />
                         </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Form
-                                type="email"
-                                label="Email"
-                                name="email"
-                                value={values.email}
-                                onChange={handleChange}
-                                error={errors.email}
-                                required
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Form
-                                type="text"
-                                label="Telefone"
-                                name="phone_1"
-                                value={values.phone_1}
-                                onChange={handleChange}
-                                error={errors.phone_1}
-                                required
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Form
-                                type="text"
-                                label="Nome do Pai"
-                                name="father_name"
-                                value={values.father_name}
-                                onChange={handleChange}
-                                error={errors.father_name}
-                                required
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Form
-                                type="text"
-                                label="Nome da Mãe"
-                                name="mother_name"
-                                value={values.mother_name}
-                                onChange={handleChange}
-                                error={errors.mother_name}
-                                required
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Form
-                                type="select"
-                                label="Gênero"
-                                name="gender"
-                                value={values.gender}
-                                onChange={handleChange}
-                                options={[
-                                    { value: 'male', label: 'Masculino' },
-                                    { value: 'female', label: 'Feminino' },
-                                ]}
-                                error={errors.gender}
-                                required
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6  mt-1">
-                            <Form
-                                type="select"
-                                label="Nacionalidade"
-                                name="nationality"
-                                value={values.nationality}
-                                onChange={handleChange}
-                                options={countries}
-                                error={errors.nationality}
-                                required
-                                searchable
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Form
-                                type="date"
-                                label="Data de Nascimento"
-                                name="birth_date"
-                                value={values.birth_date}
-                                onChange={handleChange}
-                                error={errors.birth_date}
-                                required
-                            />
-                        </div>
-                        <div className="col-span-12 flex justify-end mt-6">
-                            <button
-                                type="submit"
-                                className="bg-primary text-white px-6 py-2 rounded hover:bg-primary-dark transition"
-                            >
-                                Atualizar Usuário
-                            </button>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* STEP 1 - Conta & Básicos */}
+                        {step === 1 && (
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-12 md:col-span-6">
+                                    <Form
+                                        type="text"
+                                        label="Nome completo"
+                                        name="name"
+                                        value={values.name}
+                                        onChange={handleChange}
+                                        error={getError('name')}
+                                        required
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-6">
+                                    <Form
+                                        type="email"
+                                        label="Email"
+                                        name="email"
+                                        value={values.email}
+                                        onChange={handleChange}
+                                        error={getError('email')}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 2 - Pessoais */}
+                        {step === 2 && (
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-12 md:col-span-3">
+                                    <Form
+                                        type="select"
+                                        label="Gênero"
+                                        name="gender"
+                                        value={values.gender}
+                                        onChange={handleChange}
+                                        options={[
+                                            { value: 'male', label: 'Masculino' },
+                                            { value: 'female', label: 'Feminino' },
+                                            { value: 'other', label: 'Outro' },
+                                        ]}
+                                        error={getError('gender')}
+                                        required
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-3">
+                                    <Form
+                                        type="date"
+                                        label="Data de Nascimento"
+                                        name="birth_date"
+                                        value={values.birth_date}
+                                        onChange={handleChange}
+                                        error={getError('birth_date')}
+                                        required
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-6">
+                                    <Form
+                                        type="select"
+                                        label="Nacionalidade"
+                                        name="nationality"
+                                        value={values.nationality}
+                                        onChange={handleChange}
+                                        options={countries}
+                                        error={getError('nationality')}
+                                        required
+                                        searchable
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-6">
+                                    <Form
+                                        type="text"
+                                        label="Nome do Pai"
+                                        name="father_name"
+                                        value={values.father_name}
+                                        onChange={handleChange}
+                                        error={getError('father_name')}
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-6">
+                                    <Form
+                                        type="text"
+                                        label="Nome da Mãe"
+                                        name="mother_name"
+                                        value={values.mother_name}
+                                        onChange={handleChange}
+                                        error={getError('mother_name')}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 3 - Identificação */}
+                        {step === 3 && (
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-12 md:col-span-4">
+                                    <Form
+                                        type="select"
+                                        label="Tipo de Identificação"
+                                        name="identification_type"
+                                        value={values.identification_type}
+                                        onChange={handleChange}
+                                        options={[
+                                            { value: 'BI', label: 'BI' },
+                                            { value: 'Passport', label: 'Passaporte' },
+                                            { value: 'Carta de conducao', label: 'Carta de Condução' },
+                                        ]}
+                                        error={getError('identification_type')}
+                                        required
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-8">
+                                    <Form
+                                        type="text"
+                                        label="Número de Identificação"
+                                        name="identification_number"
+                                        value={values.identification_number}
+                                        onChange={handleChange}
+                                        error={getError('identification_number')}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 4 - Endereço & Contato */}
+                        {step === 4 && (
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-12 md:col-span-8">
+                                    <Form
+                                        type="text"
+                                        label="Endereço"
+                                        name="address"
+                                        value={values.address}
+                                        onChange={handleChange}
+                                        error={getError('address')}
+                                        required
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-4">
+                                    <Form
+                                        type="text"
+                                        label="Província"
+                                        name="province"
+                                        value={values.province}
+                                        onChange={handleChange}
+                                        error={getError('province')}
+                                        required
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-6">
+                                    <Form
+                                        type="text"
+                                        label="Telefone Principal"
+                                        name="phone_1"
+                                        value={values.phone_1}
+                                        onChange={handleChange}
+                                        error={getError('phone_1')}
+                                        required
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-6">
+                                    <Form
+                                        type="text"
+                                        label="Telefone Secundário"
+                                        name="phone_2"
+                                        value={values.phone_2}
+                                        onChange={handleChange}
+                                        error={getError('phone_2')}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 5 - Detalhes Pessoais */}
+                        {step === 5 && (
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-12 md:col-span-6">
+                                    <Form
+                                        type="select"
+                                        label="Estado Civil"
+                                        name="marital_status"
+                                        value={values.marital_status}
+                                        onChange={handleChange}
+                                        error={getError('marital_status')}
+                                        options={[
+                                            { value: 'solteiro', label: 'Solteiro(a)' },
+                                            { value: 'casado', label: 'Casado(a)' },
+                                            { value: 'divorciado', label: 'Divorciado(a)' },
+                                            { value: 'viuvo', label: 'Viúvo(a)' },
+                                            { value: 'outro', label: 'Outro (a)' },
+                                        ]}
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-6">
+                                    <Form
+                                        type="select"
+                                        label="Orientação Sexual"
+                                        name="sexual_orientation"
+                                        value={values.sexual_orientation}
+                                        onChange={handleChange}
+                                        error={getError('sexual_orientation')}
+                                        options={[
+                                            { value: 'heterossexual', label: 'Heterossexual' },
+                                            { value: 'homossexual', label: 'Homossexual' },
+                                            { value: 'bissexual', label: 'Bissexual' },
+                                            { value: 'pansexual', label: 'Pansexual' },
+                                            { value: 'assexual', label: 'Assexual' },
+                                            { value: 'outro', label: 'Outro (a)' },
+                                        ]}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 6 - Emergência 1 */}
+                        {step === 6 && (
+                            <div>
+                                <div className="text-lg font-semibold mt-2 mb-3 text-gray-700 dark:text-gray-200">
+                                    Contato de Emergência 1
+                                </div>
+                                <div className="grid grid-cols-12 gap-6">
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Form
+                                            type="text"
+                                            label="Nome"
+                                            name="emergency_contact_1_name"
+                                            value={values.emergency_contact_1_name}
+                                            onChange={handleChange}
+                                            error={getError('emergency_contact_1_name')}
+                                        />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Form
+                                            type="select"
+                                            label="Relação"
+                                            name="emergency_contact_1_relationship"
+                                            value={values.emergency_contact_1_relationship}
+                                            onChange={handleChange}
+                                            error={getError('emergency_contact_1_relationship')}
+                                            options={[
+                                                { value: 'pai', label: 'Pai' },
+                                                { value: 'mae', label: 'Mãe' },
+                                                { value: 'irmao', label: 'Irmão (a)' },
+                                                { value: 'tio', label: 'Tio (a)' },
+                                                { value: 'conjuge', label: 'Cônjuge' },
+                                                { value: 'filho', label: 'Filho (a)' },
+                                                { value: 'amigo', label: 'Amigo (a)' },
+                                                { value: 'outro', label: 'Outro (a)' },
+                                            ]}
+                                        />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Form
+                                            type="text"
+                                            label="Telefone"
+                                            name="emergency_contact_1_phone"
+                                            value={values.emergency_contact_1_phone}
+                                            onChange={handleChange}
+                                            error={getError('emergency_contact_1_phone')}
+                                        />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Form
+                                            type="text"
+                                            label="Endereço"
+                                            name="emergency_contact_1_address"
+                                            value={values.emergency_contact_1_address}
+                                            onChange={handleChange}
+                                            error={getError('emergency_contact_1_address')}
+                                        />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Form
+                                            type="text"
+                                            label="Fax"
+                                            name="emergency_contact_1_fax"
+                                            value={values.emergency_contact_1_fax}
+                                            onChange={handleChange}
+                                            error={getError('emergency_contact_1_fax')}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 7 - Emergência 2 */}
+                        {step === 7 && (
+                            <div>
+                                <div className="text-lg font-semibold mt-2 mb-3 text-gray-700 dark:text-gray-200">
+                                    Contato de Emergência 2
+                                </div>
+                                <div className="grid grid-cols-12 gap-6">
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Form
+                                            type="text"
+                                            label="Nome"
+                                            name="emergency_contact_2_name"
+                                            value={values.emergency_contact_2_name}
+                                            onChange={handleChange}
+                                            error={getError('emergency_contact_2_name')}
+                                        />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Form
+                                            type="select"
+                                            label="Relação"
+                                            name="emergency_contact_2_relationship"
+                                            value={values.emergency_contact_2_relationship}
+                                            onChange={handleChange}
+                                            error={getError('emergency_contact_2_relationship')}
+                                            options={[
+                                                { value: 'pai', label: 'Pai' },
+                                                { value: 'mae', label: 'Mãe' },
+                                                { value: 'irmao', label: 'Irmão (a)' },
+                                                { value: 'tio', label: 'Tio (a)' },
+                                                { value: 'conjuge', label: 'Cônjuge' },
+                                                { value: 'filho', label: 'Filho (a)' },
+                                                { value: 'amigo', label: 'Amigo (a)' },
+                                                { value: 'outro', label: 'Outro (a)' },
+                                            ]}
+                                        />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Form
+                                            type="text"
+                                            label="Telefone"
+                                            name="emergency_contact_2_phone"
+                                            value={values.emergency_contact_2_phone}
+                                            onChange={handleChange}
+                                            error={getError('emergency_contact_2_phone')}
+                                        />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Form
+                                            type="text"
+                                            label="Endereço"
+                                            name="emergency_contact_2_address"
+                                            value={values.emergency_contact_2_address}
+                                            onChange={handleChange}
+                                            error={getError('emergency_contact_2_address')}
+                                        />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Form
+                                            type="text"
+                                            label="Fax"
+                                            name="emergency_contact_2_fax"
+                                            value={values.emergency_contact_2_fax}
+                                            onChange={handleChange}
+                                            error={getError('emergency_contact_2_fax')}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 8 - Seguro */}
+                        {step === 8 && (
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-12 md:col-span-4">
+                                    <Form
+                                        type="text"
+                                        label="Nome do Seguro"
+                                        name="insurance_name"
+                                        value={values.insurance_name}
+                                        onChange={handleChange}
+                                        error={getError('insurance_name')}
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-4">
+                                    <Form
+                                        type="text"
+                                        label="Número do Seguro"
+                                        name="insurance_number"
+                                        value={values.insurance_number}
+                                        onChange={handleChange}
+                                        error={getError('insurance_number')}
+                                    />
+                                </div>
+                                <div className="col-span-12 md:col-span-4">
+                                    <Form
+                                        type="text"
+                                        label="Fornecedor do Seguro"
+                                        name="insurance_provider"
+                                        value={values.insurance_provider}
+                                        onChange={handleChange}
+                                        error={getError('insurance_provider')}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Navigation Buttons */}
+                        <div className="flex items-center justify-between mt-6">
+                            <div>
+                                {step > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={prevStep}
+                                        className="px-4 py-2 rounded border border-gray-300 hover:bg-gray-50 transition"
+                                    >
+                                        &larr; Anterior
+                                    </button>
+                                )}
+                            </div>
+                            <div className="flex gap-3">
+                                {step < 8 && (
+                                    <button
+                                        type="button"
+                                        onClick={nextStep}
+                                        className="bg-primary text-white px-6 py-2 rounded hover:bg-primary-dark transition"
+                                    >
+                                        Próximo
+                                    </button>
+                                )}
+                                {step === 8 && (
+                                    <button
+                                        type="submit"
+                                        className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition"
+                                    >
+                                        Atualizar Paciente
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </form>
                 </div>

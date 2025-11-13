@@ -2,27 +2,42 @@ import React from 'react';
 import Select from 'react-select';
 
 export default function Form({
-                                 type = 'text',
-                                 label,
-                                 name,
-                                 value,
-                                 checked,
-                                 onChange,
-                                 options = [],
-                                 error,
-                                 required = false,
-                                 className = '',
-                                 searchable = false,
-                                 ...rest
-                             }) {
+    type = 'text',
+    label,
+    name,
+    value,
+    checked,
+    onChange,
+    options = [],
+    error,
+    required = false,
+    className = '',
+    searchable = false,
+    ...rest
+}) {
     const inputClasses =
-        'mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white focus:ring-primary focus:border-primary ' +
+        'mt-1 block w-full border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary focus:border-0 ' +
         className;
 
     const handleSelectChange = (selected) => {
-        onChange({ target: { name, value: selected ? selected.value : '' } });
+        if (type === 'select-multiple') {
+            onChange({
+                target: {
+                    name,
+                    value: selected ? selected.map((opt) => opt.value) : [],
+                },
+            });
+        } else {
+            onChange({
+                target: {
+                    name,
+                    value: selected ? selected.value : '',
+                },
+            });
+        }
     };
 
+    // 🎨 Estilos personalizados do React-Select (sem bordas no hover)
     const selectStyles = {
         container: (provided) => ({
             ...provided,
@@ -32,13 +47,34 @@ export default function Form({
             ...provided,
             width: '100%',
             borderRadius: '0.375rem',
-            borderColor: state.isFocused ? '#8B57A4' : '#d1d5db',
-            boxShadow: state.isFocused ? '0 0 0 1px #8B57A4' : 'none',
+            border: '1px solid #d1d5db', // sempre cinza
+            boxShadow: 'none',            // sem sombra
             minHeight: '2.5rem',
             backgroundColor: 'white',
+            '&:hover': {
+                borderColor: '#d1d5db',   // mesmo border no hover
+            },
         }),
         input: (provided) => ({ ...provided, color: 'black' }),
         singleValue: (provided) => ({ ...provided, color: 'black' }),
+        multiValue: (provided) => ({
+            ...provided,
+            backgroundColor: '#8B57A4',
+            borderRadius: '0.25rem',
+        }),
+        multiValueLabel: (provided) => ({
+            ...provided,
+            color: 'white',
+            fontWeight: 500,
+        }),
+        multiValueRemove: (provided) => ({
+            ...provided,
+            color: 'white',
+            ':hover': {
+                backgroundColor: '#702E8A',
+                color: 'white',
+            },
+        }),
         menu: (provided) => ({
             ...provided,
             borderRadius: '0.375rem',
@@ -65,34 +101,22 @@ export default function Form({
                 </label>
             )}
 
-            {type === 'select' ? (
-                searchable ? (
-                    <Select
-                        options={options}
-                        value={options.find((opt) => opt.value === value)}
-                        onChange={handleSelectChange}
-                        placeholder="Selecione..."
-                        isSearchable
-                        styles={selectStyles}
-                    />
-                ) : (
-                    <select
-                        name={name}
-                        id={name}
-                        value={value}
-                        onChange={onChange}
-                        required={required}
-                        className={inputClasses + ' w-full'}
-                        {...rest}
-                    >
-                        <option value="">Selecione</option>
-                        {options.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                            </option>
-                        ))}
-                    </select>
-                )
+            {/* ✅ SELECT e SELECT-MULTIPLE */}
+            {type === 'select' || type === 'select-multiple' ? (
+                <Select
+                    isMulti={type === 'select-multiple'}
+                    options={options}
+                    value={
+                        type === 'select-multiple'
+                            ? options.filter((opt) => value?.includes(opt.value))
+                            : options.find((opt) => opt.value === value) || null
+                    }
+                    onChange={handleSelectChange}
+                    placeholder="Selecione..."
+                    isSearchable={searchable}
+                    styles={selectStyles}
+                    {...rest}
+                />
             ) : type === 'textarea' ? (
                 <textarea
                     name={name}
@@ -100,7 +124,7 @@ export default function Form({
                     value={value}
                     onChange={onChange}
                     required={required}
-                    className={inputClasses + ' w-full'}
+                    className={inputClasses}
                     rows={rest.rows || 3}
                     {...rest}
                 />
@@ -131,7 +155,7 @@ export default function Form({
                         name={name}
                         checked={checked}
                         onChange={onChange}
-                        className="rounded text-primary focus:ring-primary"
+                        className="rounded text-primary focus:ring-primary "
                         {...rest}
                     />
                     <span>{label}</span>
@@ -144,7 +168,7 @@ export default function Form({
                     value={value}
                     onChange={onChange}
                     required={required}
-                    className={inputClasses + ' w-full'}
+                    className={inputClasses}
                     {...rest}
                 />
             )}

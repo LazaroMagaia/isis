@@ -20,6 +20,7 @@ class User extends Authenticatable
         'role',
 
         // Basic information
+        'patient_id',
         'name',
         'father_name',
         'mother_name',
@@ -82,4 +83,35 @@ class User extends Authenticatable
         'birth_date' => 'date',
         'password' => 'hashed',
     ];
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            if ($user->role === 'patient') {
+                $user->patient_id = self::generatePatientId();
+            }
+        });
+    }
+
+    /**
+     * Gera o código de paciente (patient_id) com base no ano e sequência.
+     *
+     * Exemplo: 250001 → primeiro paciente do ano de 2025
+     */
+    public static function generatePatientId()
+    {
+        $year = now()->format('y'); // últimos dois dígitos do ano
+
+        // Conta quantos pacientes foram criados neste ano
+        $count = self::where('role', 'patient')
+            ->whereYear('created_at', now()->year)
+            ->count() + 1;
+
+        // Adiciona zeros à esquerda (ex: 0001)
+        $sequence = str_pad($count, 4, '0', STR_PAD_LEFT);
+
+        return "{$year}{$sequence}";
+    }
+
 }

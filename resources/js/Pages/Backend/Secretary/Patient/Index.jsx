@@ -1,6 +1,7 @@
 import { usePage, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import PaginatedTable from '@/Components/Backend/PaginatedTable.jsx';
+import { EditIcon, DeleteIcon } from "@/Components/Backend/HeroIcons";
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 
@@ -54,31 +55,25 @@ export default function IndexUsers() {
     };
 
     const columns = [
-        { label: 'ID', key: 'id' },
+        { label: 'Processo', key: 'patient_id' },
         { label: 'Nome', key: 'name' },
-        { label: 'Email', key: 'email' },
         { label: 'Telefone', key: 'phone_1' },
-        {
-            label: 'Função',
-            key: 'role',
-            render: user => rolesPT[user.role] || user.role // traduz a role
-        },
         {
             label: 'Ações',
             align: 'right',
             render: user => (
-                <div className="text-right">
+                <div className="flex justify-end items-center">
                     <Link
                         href={route('secretary.patient.edit', user.id)}
                         className="text-primary hover:underline mr-4"
                     >
-                        Editar
+                        <EditIcon/>
                     </Link>
                     <button
                         onClick={() => handleDelete(user.id)}
                         className="text-red-500 hover:underline"
                     >
-                        Excluir
+                        <DeleteIcon/>
                     </button>
                 </div>
             )
@@ -91,7 +86,7 @@ export default function IndexUsers() {
     };
 
     return (
-        <DashboardLayout title="Equipe">
+        <DashboardLayout title="Pacientes">
             <div className="max-w-7xl mx-auto px-4 py-10">
                 <div className="flex justify-between items-center mb-6">
                     <Link href={route('secretary.dashboard')} className="text-gray-600 dark:text-gray-300 hover:underline">
@@ -120,7 +115,8 @@ export default function IndexUsers() {
                             placeholder="Pesquisar por nome, email ou telefone"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="border rounded px-4 py-2 w-full sm:w-1/3 dark:bg-gray-700 dark:text-white"
+                            className="mt-1 block w-1/3 border-gray-300 rounded-md shadow-sm
+                                dark:bg-gray-700 dark:text-white focus:ring-primary focus:border-primary"
                         />
                         <button type="submit" className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition">
                             Filtrar

@@ -4,6 +4,7 @@ namespace App\Models\Secretary;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
+use App\Models\DoctorAvailabilitySlot;
 class Appointment extends Model
 {
     protected $fillable = [
@@ -13,7 +14,7 @@ class Appointment extends Model
         'service_id',
         'origin',
         'date',
-        'time',
+        'slot_id',
         'status',
         'amount',
         'payment_status',
@@ -25,8 +26,11 @@ class Appointment extends Model
         'approved_at',
         'completed_at',
         'discount',
+        'specialties',
     ];
-
+    protected $casts = [
+        'specialties' => 'array',
+    ];
     // 🔹 Relacionamentos
     public function patient()
     {
@@ -51,5 +55,9 @@ class Appointment extends Model
     public function paymentVerifier()
     {
         return $this->belongsTo(User::class, 'payment_verified_by');
+    }
+    public function slot()
+    {
+        return $this->belongsTo(DoctorAvailabilitySlot::class, 'slot_id');
     }
 }

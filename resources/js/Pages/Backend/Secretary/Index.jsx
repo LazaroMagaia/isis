@@ -1,6 +1,6 @@
 import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import { Link } from '@inertiajs/react';
-import { FaUserFriends, FaCalendarAlt, FaUsers, FaMoneyBillWave } from 'react-icons/fa';
+import { FaUserFriends, FaCalendarAlt, FaUserMd, FaMoneyBillWave } from 'react-icons/fa';
 
 export default function Dashboard() {
     const cards = [
@@ -18,8 +18,14 @@ export default function Dashboard() {
             icon: <FaCalendarAlt className="text-primary text-5xl group-hover:text-white transition-colors" />,
             href: route('secretary.appointments.index'),
         },
+        {
+            title: 'Medicos',
+            value: 45,
+            description: 'Disponibilidade dos medicos',
+            icon: <FaUserMd className="text-primary text-5xl group-hover:text-white transition-colors" />,
+            href: route('secretary.doctor-availability.index'),
+        },
     ];
-
     return (
         <DashboardLayout title="Painel da Clínica">
             <div className="container mx-auto px-4 py-10">

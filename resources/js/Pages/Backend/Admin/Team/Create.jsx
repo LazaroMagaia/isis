@@ -34,8 +34,8 @@ export default function CreateUser() {
             onSuccess: () => {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Usuário criado!',
-                    text: 'O usuário foi cadastrado com sucesso.',
+                    title: 'Membro criado!',
+                    text: 'O Membro foi cadastrado com sucesso.',
                     confirmButtonColor: '#8B57A4', // cor primary
                 }).then(() => {
                     // Redireciona para a listagem após fechar o alerta
@@ -46,7 +46,7 @@ export default function CreateUser() {
                 Swal.fire({
                     icon: 'error',
                     title: 'Erro',
-                    text: 'Ocorreu um problema ao criar o usuário. Verifique os campos.',
+                    text: 'Ocorreu um problema ao criar o Membro. Verifique os campos.',
                     confirmButtonColor: '#8B57A4',
                 });
             },
@@ -54,7 +54,7 @@ export default function CreateUser() {
     };
 
     return (
-        <DashboardLayout title="Criar Usuário">
+        <DashboardLayout title="Novo Membro">
             <div className="max-w-7xl mx-auto px-4 py-10">
                 <div className="flex justify-between items-center mb-6">
                     <Link
@@ -67,7 +67,7 @@ export default function CreateUser() {
 
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
                     <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100">
-                        Novo Usuário
+                        Novo Membro
                     </h2>
 
                     <form

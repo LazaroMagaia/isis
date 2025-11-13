@@ -1,8 +1,8 @@
 // util.js
 // Centraliza URLs absolutas para imagens no servidor local Laravel
 
-const BASE_URL = 'http://127.0.0.1:8000';
-
+//const BASE_URL = 'http://127.0.0.1:8000';
+const BASE_URL = 'https://isis.llmagaia.com';
 const UTIL = {
     images: {
         avatars: {

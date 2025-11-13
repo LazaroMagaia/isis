@@ -53,7 +53,7 @@ export default function EditUser() {
             onSuccess: () => {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Usuário atualizado!',
+                    title: 'Membro atualizado!',
                     text: 'As informações do usuário foram atualizadas com sucesso.',
                     confirmButtonColor: '#8B57A4',
                 }).then(() => {
@@ -64,14 +64,14 @@ export default function EditUser() {
                 Swal.fire({
                     icon: 'error',
                     title: 'Erro',
-                    text: 'Ocorreu um problema ao atualizar o usuário. Verifique os campos.',
+                    text: 'Ocorreu um problema ao atualizar o Membro. Verifique os campos.',
                     confirmButtonColor: '#8B57A4',
                 });
             },
         });
     };
     return (
-        <DashboardLayout title="Editar Usuário">
+        <DashboardLayout title="Editar Membro">
             <div className="max-w-7xl mx-auto px-4 py-10">
                 <div className="flex justify-between items-center mb-6">
                     <Link
@@ -84,7 +84,7 @@ export default function EditUser() {
 
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
                     <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100">
-                        Editar Usuário
+                        Editar Membro
                     </h2>
 
                     <form

@@ -1,8 +1,8 @@
 import { usePage, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import Swal from 'sweetalert2';
-import { FaStethoscope, FaEdit, FaTrash } from 'react-icons/fa';
-
+import { FaStethoscope } from 'react-icons/fa';
+import { EditIcon, DeleteIcon } from "@/Components/Backend/HeroIcons";
 export default function IndexServices() {
     const { service, category } = usePage().props;
 
@@ -111,13 +111,13 @@ export default function IndexServices() {
                                                 href={route('admin.services.edit', item.id)}
                                                 className="flex items-center gap-2 text-primary hover:underline"
                                             >
-                                                <FaEdit /> Editar
+                                                <EditIcon />
                                             </Link>
                                             <button
                                                 onClick={() => handleDelete(item.id)}
                                                 className="flex items-center gap-2 text-red-500 hover:underline"
                                             >
-                                                <FaTrash /> Excluir
+                                                <DeleteIcon />
                                             </button>
                                         </div>
                                     </div>
