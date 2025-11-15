@@ -66,11 +66,11 @@ export default function EditAppointment() {
         }
     }, [values.specialties, doctors]);
 
-    // 🔹 Carrega datas e slots disponíveis ao iniciar a página ou mudar médico
+    // 🔹 Carrega datas e slots disponíveis ao iniciar ou mudar médico
     useEffect(() => {
         if (!values.doctor_id) return;
 
-        fetch(`/api/doctor/${values.doctor_id}/available-dates`)
+        fetch(route('secretary.appointments.available-dates', values.doctor_id))
             .then(res => res.json())
             .then((dates) => {
                 setDoctorDates(dates);
@@ -80,7 +80,7 @@ export default function EditAppointment() {
                     const selectedDate = dates.find(d => d.date === values.date);
 
                     if (selectedDate) {
-                        fetch(`/api/availability-date/${selectedDate.id}/available-slots`)
+                        fetch(route('secretary.appointments.available-slots', selectedDate.id))
                             .then(res => res.json())
                             .then((slots) => {
                                 setAvailableSlots(slots);
@@ -99,7 +99,6 @@ export default function EditAppointment() {
             .catch(() => setDoctorDates([]));
     }, [values.doctor_id]);
 
-
     // 🔹 Atualiza horários disponíveis quando a data muda
     useEffect(() => {
         if (!values.date) {
@@ -111,7 +110,7 @@ export default function EditAppointment() {
         const selectedDate = doctorDates.find(d => d.date === values.date);
         if (!selectedDate) return;
 
-        fetch(`/api/availability-date/${selectedDate.id}/available-slots`)
+        fetch(route('secretary.appointments.available-slots', selectedDate.id))
             .then(res => res.json())
             .then((slots) => setAvailableSlots(slots))
             .catch(() => setAvailableSlots([]));
@@ -169,7 +168,6 @@ export default function EditAppointment() {
             },
         });
     };
-
     return (
         <DashboardLayout title="Editar Agendamento">
             <div className="max-w-7xl mx-auto px-4 py-10">

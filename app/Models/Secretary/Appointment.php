@@ -5,6 +5,7 @@ namespace App\Models\Secretary;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\DoctorAvailabilitySlot;
+use App\Models\Doctor\{AppointmentDocumentation, AppointmentPrescription, AppointmentAttachment};
 class Appointment extends Model
 {
     protected $fillable = [
@@ -60,4 +61,19 @@ class Appointment extends Model
     {
         return $this->belongsTo(DoctorAvailabilitySlot::class, 'slot_id');
     }
+    public function documentation()
+    {
+        return $this->hasOne(AppointmentDocumentation::class);
+    }
+
+    public function prescription()
+    {
+        return $this->hasOne(AppointmentPrescription::class);
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(AppointmentAttachment::class,'appointment_id');
+    }
+
 }

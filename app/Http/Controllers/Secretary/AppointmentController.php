@@ -19,6 +19,13 @@ class AppointmentController extends Controller
     {
         $search = request()->get('search', '');
         $status = request()->get('status', '');
+        $doctor_id = request()->get('doctor_id', '');
+
+        // Lista de médicos para o select
+        $doctors = User::where('role', 'doctor')
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
 
         // Query base
         $baseQuery = Appointment::with(['patient', 'doctor', 'service','slot'])
@@ -28,12 +35,13 @@ class AppointmentController extends Controller
                         ->orWhereHas('doctor', fn($d) => $d->where('name', 'like', "%{$search}%"))
                         ->orWhereHas('service', fn($s) => $s->where('name', 'like', "%{$search}%"));
                 });
-            });
+            })
+            ->when($doctor_id, fn($q) => $q->where('doctor_id', $doctor_id)); // 👈 FILTRO POR MÉDICO
 
-        // Total (com ou sem busca, mas sempre considerando filtro atual)
+        // Total
         $totalAppointment = (clone $baseQuery)->count();
 
-        // Paginação principal (considera o status selecionado)
+        // Paginação
         $appointments = (clone $baseQuery)
             ->when($status, fn($query) => $query->where('status', $status))
             ->when(!$status, fn($query) => $query->where('status', '!=', 'cancelado'))
@@ -41,7 +49,7 @@ class AppointmentController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        // Estatísticas filtradas conforme a busca (search)
+        // Estatísticas
         $stats = [
             'approved'  => (clone $baseQuery)->where('status', 'aprovado')->count(),
             'cancelled' => (clone $baseQuery)->where('status', 'cancelado')->count(),
@@ -52,9 +60,11 @@ class AppointmentController extends Controller
         return Inertia::render($this->route . '/Index', [
             'appointments' => $appointments,
             'totalAppointment' => $totalAppointment,
+            'doctors' => $doctors, // 👈 ENVIA PARA O FRONT
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'doctor_id' => $doctor_id, // 👈 MANTÉM SELECIONADO NO FRONT
                 'stats' => $stats,
             ],
         ]);
@@ -199,7 +209,7 @@ class AppointmentController extends Controller
     /**
      * Atualiza um agendamento existente
      */
-    public function update(Request $request, $id)
+   public function update(Request $request, $id)
     {
         $appointment = Appointment::findOrFail($id);
 
@@ -216,6 +226,14 @@ class AppointmentController extends Controller
             'payment_method' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
         ]);
+
+        // 🔹 Se a data mudou, slot_id é obrigatório
+        if (isset($validated['date']) && $validated['date'] != $appointment->date && empty($validated['slot_id'])) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['slot_id' => 'A hora é obrigatória quando a data é alterada.']);
+        }
+
         // 🔹 Recalcula valor final
         if (isset($validated['service_id'])) {
             $service = Service::findOrFail($validated['service_id']);
@@ -226,7 +244,7 @@ class AppointmentController extends Controller
         $discount = $validated['discount'] ?? $appointment->discount;
         $finalAmount = max($amount - ($amount * $discount / 100), 0);
 
-        // 🔹 Atualiza slot antigo e novo, se mudou
+        // 🔹 Atualiza slot apenas se enviado e diferente do atual
         if (isset($validated['slot_id']) && $validated['slot_id'] != $appointment->slot_id) {
             // Libera slot antigo
             if ($appointment->slot_id) {
@@ -239,6 +257,8 @@ class AppointmentController extends Controller
             // Reserva novo slot
             $newSlot = DoctorAvailabilitySlot::findOrFail($validated['slot_id']);
             $newSlot->update(['is_booked' => true]);
+        } else {
+            unset($validated['slot_id']);
         }
 
         // 🔹 Atualiza status especiais
@@ -256,8 +276,6 @@ class AppointmentController extends Controller
 
         return redirect()->back()->with('success', 'Agendamento atualizado com sucesso!');
     }
-
-
     public function destroy($id)
     {
         $appointment = Appointment::findOrFail($id);

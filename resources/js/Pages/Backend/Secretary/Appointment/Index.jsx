@@ -4,13 +4,15 @@ import PaginatedTable from '@/Components/Backend/PaginatedTable.jsx';
 import { EditIcon, DeleteIcon } from "@/Components/Backend/HeroIcons";
 import Swal from 'sweetalert2';
 import { useState } from 'react';
+import Form from '@/Components/Backend/Form.jsx';
 
 export default function IndexAppointments() {
-    const { appointments, filters } = usePage().props;
-    const { search: initialSearch = '', status: initialStatus = '', stats } = filters;
+    const { appointments, filters, doctors } = usePage().props;
+    const { search: initialSearch = '', status: initialStatus = '', doctor_id: initialDoctor = '', stats } = filters;
 
     const [search, setSearch] = useState(initialSearch);
     const [status, setStatus] = useState(initialStatus);
+    const [doctor, setDoctor] = useState(initialDoctor);
 
     const handleDelete = (id) => {
         Swal.fire({
@@ -48,7 +50,10 @@ export default function IndexAppointments() {
 
     const handleFilter = (e) => {
         e.preventDefault();
-        router.get(route('secretary.appointments.index'), { search, status }, { preserveState: true, replace: true });
+      router.get(route('secretary.appointments.index'),
+            { search, status, doctor_id: doctor },
+            { preserveState: true, replace: true }
+        );
     };
 
     const statusColors = {
@@ -119,35 +124,74 @@ export default function IndexAppointments() {
                     </div>
 
                     {/* Filtros */}
-                    <form onSubmit={handleFilter} className="flex flex-col sm:flex-row gap-4 mb-6">
-                        <input
-                            type="text"
-                            placeholder="Pesquisar por paciente, médico ou serviço"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700
-                                dark:text-white focus:ring-primary focus:border-primary"
-                        />
-                        <select
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value)}
-                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700
-                                dark:text-white focus:ring-primary focus:border-primary"
-                        >
-                            <option value="">Todos os status</option>
-                            <option value="solicitado">Solicitado</option>
-                            <option value="aguardando_pagamento">Aguardando Pagamento</option>
-                            <option value="aprovado">Aprovado</option>
-                            <option value="cancelado">Cancelado</option>
-                            <option value="concluido">Concluído</option>
-                        </select>
-                        <button
-                            type="submit"
-                            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition"
-                        >
-                            Filtrar
-                        </button>
+                    <form
+                        onSubmit={handleFilter}
+                        className="grid grid-cols-12 gap-4 mb-6 "
+                    >
+
+                        {/* 🔎 Search */}
+                        <div className="col-span-12 md:col-span-4">
+                            <Form
+                                type="text"
+                                name="search"
+                                placeholder="Pesquisar por paciente, médico ou serviço"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full"
+                            />
+                        </div>
+
+                        {/* 🩺 Médico */}
+                        <div className="col-span-12 md:col-span-4 mt-1">
+                            <Form
+                                type="select"
+                                name="doctor_id"
+                                label=""
+                                value={doctor}
+                                searchable={true}
+                                onChange={(e) => setDoctor(e.target.value)}
+                                options={doctors.map((d) => ({
+                                    value: d.id,
+                                    label: d.name,
+                                }))}
+                                placeholder="Selecionar Médico"
+                                className="w-full"
+                            />
+                        </div>
+
+                        {/* 📌 Status */}
+                        <div className="col-span-12 md:col-span-3 mt-1">
+                            <Form
+                                type="select"
+                                name="status"
+                                label=""
+                                options={[
+                                    { value: '', label: 'Todos os status' },
+                                    { value: 'solicitado', label: 'Solicitado' },
+                                    { value: 'aguardando_pagamento', label: 'Aguardando Pagamento' },
+                                    { value: 'aprovado', label: 'Aprovado' },
+                                    { value: 'cancelado', label: 'Cancelado' },
+                                    { value: 'concluido', label: 'Concluído' },
+                                ]}
+                                placeholder="Selecionar Status"
+                                value={status}
+                                onChange={(e) => setStatus(e.target.value)}
+                                className="w-full"
+                            />
+                        </div>
+
+                        {/* 🔘 Botão Filtrar */}
+                        <div className="col-span-12 md:col-span-1 mt-1">
+                            <button
+                                type="submit"
+                                className="w-full h-10 bg-primary text-white px-4 rounded hover:bg-primary-dark transition"
+                            >
+                                Filtrar
+                            </button>
+                        </div>
                     </form>
+
+
 
                     <PaginatedTable columns={[
                         { label: 'ID', key: 'id' },

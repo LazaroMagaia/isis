@@ -15,9 +15,10 @@ export default function Form({
     searchable = false,
     ...rest
 }) {
-    const inputClasses =
-        'mt-1 block w-full border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary focus:border-0 ' +
-        className;
+   const inputClasses =
+    'mt-1 block w-full h-10 px-3 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary focus:border-0 ' +
+    className;
+
 
     const handleSelectChange = (selected) => {
         if (type === 'select-multiple') {
@@ -125,7 +126,7 @@ export default function Form({
                     onChange={onChange}
                     required={required}
                     className={inputClasses}
-                    rows={rest.rows || 3}
+                    rows={rest.rows || 6}
                     {...rest}
                 />
             ) : type === 'radio' ? (

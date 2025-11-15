@@ -10,7 +10,7 @@ export default function CreateAppointment() {
 
     const [values, setValues] = useState({
         patient_id: '',
-        specialties: [],      // agora seleciona especialidades primeiro
+        specialties: [],      // seleciona especialidades primeiro
         doctor_id: '',
         service_id: '',
         date: '',
@@ -23,7 +23,7 @@ export default function CreateAppointment() {
         attachments: '',
     });
 
-    const [doctors, setDoctors] = useState([]);         // médicos filtrados
+    const [doctors, setDoctors] = useState([]);         
     const [doctorDates, setDoctorDates] = useState([]);
     const [availableSlots, setAvailableSlots] = useState([]);
 
@@ -48,7 +48,7 @@ export default function CreateAppointment() {
             return;
         }
 
-        fetch('/api/doctors-by-specialties', {
+        fetch(route('secretary.appointments.doctors-by-specialties'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export default function CreateAppointment() {
             return;
         }
 
-        fetch(`/api/doctor/${values.doctor_id}/available-dates`)
+        fetch(route('secretary.appointments.available-dates', values.doctor_id))
             .then(res => res.json())
             .then(data => setDoctorDates(data))
             .catch(() => setDoctorDates([]));
@@ -93,7 +93,7 @@ export default function CreateAppointment() {
         const selectedDate = doctorDates.find(d => d.date === values.date);
         if (!selectedDate) return;
 
-        fetch(`/api/availability-date/${selectedDate.id}/available-slots`)
+        fetch(route('secretary.appointments.available-slots', selectedDate.id))
             .then(res => res.json())
             .then(slots => setAvailableSlots(slots))
             .catch(() => setAvailableSlots([]));
@@ -101,16 +101,18 @@ export default function CreateAppointment() {
         setValues(v => ({ ...v, slot_id: '' }));
     }, [values.date, doctorDates]);
 
-        const handleChange = (e) => {
-            const { name, type, value, selectedOptions } = e.target;
-            if (type === 'select-multiple') {
-                const valuesArray = Array.from(selectedOptions, option => option.value);
-                setValues(v => ({ ...v, [name]: valuesArray }));
-                return;
-            }
-            setValues(v => ({ ...v, [name]: value }));
-        };
+    // 🔹 Manipula mudanças nos campos
+    const handleChange = (e) => {
+        const { name, type, value, selectedOptions } = e.target;
+        if (type === 'select-multiple') {
+            const valuesArray = Array.from(selectedOptions, option => option.value);
+            setValues(v => ({ ...v, [name]: valuesArray }));
+            return;
+        }
+        setValues(v => ({ ...v, [name]: value }));
+    };
 
+    // 🔹 Envia o formulário
     const handleSubmit = (e) => {
         e.preventDefault();
         router.post(route('secretary.appointments.store'), values, {
@@ -132,7 +134,6 @@ export default function CreateAppointment() {
             },
         });
     };
-
     return (
         <DashboardLayout title="Criar Agendamento">
             <div className="max-w-7xl mx-auto px-4 py-10">
