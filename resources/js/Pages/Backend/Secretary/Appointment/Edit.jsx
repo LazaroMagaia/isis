@@ -9,10 +9,12 @@ export default function EditAppointment() {
 
     const currentDoctor = doctors.find(d => d.id == appointment.doctor_id);
     const initialSpecialties = currentDoctor ? JSON.parse(currentDoctor.specialties || '[]') : [];
-
+    const initialPaidAmount = appointment.payments?.length
+    ? appointment.payments[0].amount
+    : '';
     const [values, setValues] = useState({
         patient_id: appointment.patient_id || '',
-        specialties: initialSpecialties, // especialidades do médico atual
+        specialties: initialSpecialties,
         doctor_id: appointment.doctor_id || '',
         service_id: appointment.service_id || '',
         date: appointment.date || '',
@@ -24,8 +26,8 @@ export default function EditAppointment() {
         notes: appointment.notes || '',
         attachments: appointment.attachments || '',
         status: appointment.status || '',
+        paid_amount: initialPaidAmount, // ✅ valor pago pelo paciente
     });
-
     const [filteredDoctors, setFilteredDoctors] = useState([]);
     const [doctorDates, setDoctorDates] = useState([]);
     const [availableSlots, setAvailableSlots] = useState([]);
@@ -326,10 +328,30 @@ export default function EditAppointment() {
                                     { value: 'dinheiro', label: 'Dinheiro' },
                                     { value: 'card', label: 'Débito' },
                                     { value: 'deposito_bancario', label: 'Depósito Bancário' },
+                                    { value: 'parcial', label: 'Seguradora e paciente' },
                                 ]}
+                                placeholder="Selecione o método"
                                 required
                             />
                         </div>
+
+                        {/* Se for parcial, mostrar input de valor pago */}
+                        {values.payment_method === 'parcial' && (
+                            <div className="col-span-12 md:col-span-4">
+                                <Form
+                                    type="number"
+                                    label="Valor Pago pelo Paciente"
+                                    name="paid_amount"
+                                    value={values.paid_amount || ''}
+                                    onChange={handleChange}
+                                    error={errors.paid_amount}
+                                    placeholder="0.00"
+                                    step="0.01"
+                                    required
+                                />
+                            </div>
+                        )}
+                        
 
                         {/* Status */}
                         <div className="col-span-12 md:col-span-4">
@@ -361,6 +383,7 @@ export default function EditAppointment() {
                                 onChange={handleChange}
                                 error={errors.notes}
                                 rows={3}
+                                style={{ resize: 'vertical', minHeight: '80px' }}  
                             />
                         </div>
 

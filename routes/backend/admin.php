@@ -4,7 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\Admin\{AdminController,TeamController,CategoryServiceController,ServiceController};
+use App\Http\Controllers\Admin\{AdminController,TeamController,CategoryServiceController,ServiceController,
+    MedicineController,MedicineBatchController,MedicineStockMovementController,MedicineCategoryController};
 
 Route::prefix('admin')
     ->name('admin.')
@@ -34,6 +35,30 @@ Route::prefix('admin')
         Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
         //ServiveCategories
         Route::get('/services-category', [CategoryServiceController::class, 'index'])->name('services.category.index');
+        Route::post('/services-category', [CategoryServiceController::class, 'store'])->name('services.category.store');
+        Route::put('/services-category/{id}', [CategoryServiceController::class, 'update'])->name('services.category.update');
+        Route::delete('/services-category/{id}', [CategoryServiceController::class, 'destroy'])->name('services.category.destroy');
+        //MedicineCategoryController
+        Route::get('/medicine-categories', [MedicineCategoryController::class, 'index'])->name('medicinecategories.index');
+        Route::get('/medicine-categories/create', [MedicineCategoryController::class, 'create'])->name('medicinecategories.create');
+        Route::post('/medicine-categories', [MedicineCategoryController::class, 'store'])->name('medicinecategories.store');
+        Route::get('/medicine-categories/{category}/edit', [MedicineCategoryController::class, 'edit'])->name('medicinecategories.edit');
+        Route::put('/medicine-categories/{category}', [MedicineCategoryController::class, 'update'])->name('medicinecategories.update');
+        Route::delete('/medicine-categories/{category}', [MedicineCategoryController::class, 'destroy'])->name('medicinecategories.destroy');
 
+        //MedicineController
+        Route::get('/medicines', [MedicineController::class, 'index'])->name('medicines.index');
+        Route::get('/medicines/create', [MedicineController::class, 'create'])->name('medicines.create');
+        Route::post('/medicines', [MedicineController::class, 'store'])->name('medicines.store');
+        Route::get('/medicines/{medicine}/edit', [MedicineController::class, 'edit'])->name('medicines.edit');
+        Route::put('/medicines/{medicine}', [MedicineController::class, 'update'])->name('medicines.update');
+        Route::delete('/medicines/{medicine}', [MedicineController::class, 'destroy'])->name('medicines.destroy');
+        //MedicineBatchController
+        Route::get('/medicine-batches/{id}', [MedicineBatchController::class, 'index'])->name('medicinebatches.index');
+        Route::get('/medicine-batches/create/{id}', [MedicineBatchController::class, 'create'])->name('medicinebatches.create');
+        Route::post('/medicine-batches/{id}', [MedicineBatchController::class, 'store'])->name('medicinebatches.store'); 
+        Route::get('/medicine-batches/{batch}/edit/{id}', [MedicineBatchController::class, 'edit'])->name('medicinebatches.edit');
+        Route::put('/medicine-batches/{batch}', [MedicineBatchController::class, 'update'])->name('medicinebatches.update');
+        Route::delete('/medicine-batches/{batch}', [MedicineBatchController::class, 'destroy'])->name('medicinebatches.destroy');
 
     });

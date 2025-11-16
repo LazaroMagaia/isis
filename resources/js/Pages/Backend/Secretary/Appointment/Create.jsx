@@ -290,13 +290,31 @@ export default function CreateAppointment() {
                                     { value: 'm-pesa', label: 'M-Pesa' },
                                     { value: 'm-kesh', label: 'M-Kesh' },
                                     { value: 'dinheiro', label: 'Dinheiro' },
-                                    { value:"card",label:"Débito"},
+                                    { value: 'card', label: 'Débito' },
                                     { value: 'deposito_bancario', label: 'Depósito Bancário' },
+                                    { value: 'parcial', label: 'Seguradora e paciente' },
                                 ]}
                                 placeholder="Selecione o método"
                                 required
                             />
                         </div>
+
+                        {/* Se for parcial, mostrar input de valor pago */}
+                        {values.payment_method === 'parcial' && (
+                            <div className="col-span-12 md:col-span-4">
+                                <Form
+                                    type="number"
+                                    label="Valor Pago pelo Paciente"
+                                    name="paid_amount"
+                                    value={values.paid_amount || ''}
+                                    onChange={handleChange}
+                                    error={errors.paid_amount}
+                                    placeholder="0.00"
+                                    step="0.01"
+                                    required
+                                />
+                            </div>
+                        )}
 
                         {/* Notas */}
                         <div className="col-span-12">
@@ -307,7 +325,8 @@ export default function CreateAppointment() {
                                 value={values.notes}
                                 onChange={handleChange}
                                 error={errors.notes}
-                                rows={3}
+                                rows={5}
+                                style={{ resize: 'vertical', minHeight: '80px' }}
                             />
                         </div>
 

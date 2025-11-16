@@ -1,6 +1,6 @@
 import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import { Link } from '@inertiajs/react';
-import { FaUserFriends, FaCalendarAlt, FaUsers, FaStethoscope } from 'react-icons/fa';
+import { FaUserFriends, FaPills, FaUsers, FaStethoscope } from 'react-icons/fa';
 
 export default function Dashboard() {
     const cards = [
@@ -17,6 +17,13 @@ export default function Dashboard() {
             description: 'Especialistas disponíveis',
             icon: <FaUsers className="text-primary text-5xl group-hover:text-white transition-colors" />,
             href: route('admin.team.index'),
+        },
+        {
+            title: 'Medicamentos',
+            value: 'Medicamentos',
+            description: 'Controle e estoque',
+            icon: <FaPills className="text-primary text-5xl group-hover:text-white transition-colors" />,
+            href: route('admin.medicines.index'),
         },
         {
             title: 'Serviços',

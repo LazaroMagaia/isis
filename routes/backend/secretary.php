@@ -5,7 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\Secretary\{SecretaryController,UsersController,AppointmentController,
-    DoctorAvailabilityController};
+    DoctorAvailabilityController,DocumentationController,PrescriptionController,AppointmentPaymentController};
 
 Route::prefix('secretary')
     ->name('secretary.')
@@ -24,7 +24,7 @@ Route::prefix('secretary')
         Route::put('/patient/{patient}', [UsersController::class, 'update'])->name('patient.update');
         Route::delete('/patient/{patient}', [UsersController::class, 'destroy'])->name('patient.destroy');
 
-        //Schedule
+        //Appointments
         Route::get('/appointment', [AppointmentController::class, 'index'])->name('appointments.index');
         Route::get('/appointment/create', [AppointmentController::class, 'create'])->name('appointments.create');
         Route::post('/appointment', [AppointmentController::class, 'store'])->name('appointments.store');
@@ -32,6 +32,9 @@ Route::prefix('secretary')
         Route::get('/appointment/{schedule}/edit', [AppointmentController::class, 'edit'])->name('appointments.edit');
         Route::put('/appointment/{schedule}', [AppointmentController::class, 'update'])->name('appointments.update');
         Route::delete('/appointment/{schedule}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
+        Route::patch('payments/appointments/{appointment}/payments/update-status',[AppointmentPaymentController::class, 'updateBothStatuses'])
+        ->name('appointments.payments.update-both-status');
+
 
         //Doctor Availability
         Route::get('/doctor-availability', [DoctorAvailabilityController::class, 'index'])->name('doctor-availability.index');
@@ -48,5 +51,17 @@ Route::prefix('secretary')
         Route::get('/doctor/{doctor}/available-dates', [AppointmentController::class, 'availableDates']);
         Route::get('/availability-date/{date}/available-slots', [AppointmentController::class, 'availableSlots']);
         
-
+        //Documentation
+        Route::get('/documentation', [DocumentationController::class, 'Index'])
+            ->name('documentation.index');
+        Route::get('/appointment/documentation/{id}/documentation', [DocumentationController::class, 'documentationShow'])
+            ->name('appointments.documentation.index');
+        Route::get('documentation/{id}/prescription-generate', [DocumentationController::class, 'prescriptionGenerate'])
+            ->name('documentation.prescription-generate');
+        //PrescriptionController
+        Route::post('prescription/documentation/{id}/prescription-store', [PrescriptionController::class, 'prescriptionStore'])
+            ->name('documentation.prescription-store');
+        //PrescriptionController PDF generation route
+        Route::get('prescription/documentation/{id}/prescription-pdf', [PrescriptionController::class, 'prescriptionPDF'])
+            ->name('documentation.prescription-pdf');
     });

@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\DoctorAvailabilitySlot;
 use App\Models\Doctor\{AppointmentDocumentation, AppointmentPrescription, AppointmentAttachment};
+use App\Models\Prescriptions;
+
 class Appointment extends Model
 {
     protected $fillable = [
@@ -75,5 +77,22 @@ class Appointment extends Model
     {
         return $this->hasMany(AppointmentAttachment::class,'appointment_id');
     }
+    public function prescriptionsall()
+    {
+        return $this->hasMany(Prescriptions::class,'appointment_id');
+    }
+     public function payments()
+    {
+        return $this->hasMany(AppointmentPayment::class,'appointment_id');
+    }
 
+    public function getTotalPaidAttribute()
+    {
+        return $this->payments()->where('status', 'pago')->sum('amount');
+    }
+
+    public function getRemainingAmountAttribute()
+    {
+        return max(0, ($this->amount ?? 0) - $this->total_paid);
+    }
 }

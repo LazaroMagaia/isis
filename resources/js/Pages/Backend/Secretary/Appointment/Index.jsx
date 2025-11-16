@@ -1,7 +1,7 @@
 import { usePage, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import PaginatedTable from '@/Components/Backend/PaginatedTable.jsx';
-import { EditIcon, DeleteIcon } from "@/Components/Backend/HeroIcons";
+import { EditIcon, DeleteIcon,BankNote } from "@/Components/Backend/HeroIcons";
 import Swal from 'sweetalert2';
 import { useState } from 'react';
 import Form from '@/Components/Backend/Form.jsx';
@@ -9,7 +9,8 @@ import Form from '@/Components/Backend/Form.jsx';
 export default function IndexAppointments() {
     const { appointments, filters, doctors } = usePage().props;
     const { search: initialSearch = '', status: initialStatus = '', doctor_id: initialDoctor = '', stats } = filters;
-
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [selectedAppointment, setSelectedAppointment] = useState(null);
     const [search, setSearch] = useState(initialSearch);
     const [status, setStatus] = useState(initialStatus);
     const [doctor, setDoctor] = useState(initialDoctor);
@@ -62,6 +63,57 @@ export default function IndexAppointments() {
         cancelado: 'bg-red-200 text-red-800',
         concluido: 'bg-blue-200 text-blue-800',
     };
+
+    const openPaymentsModal = (appointment) => {
+        setSelectedAppointment(appointment);
+
+        // Carrega status do paciente
+        const pacientePayment = appointment.payments.find(p => p.payer === "paciente");
+        const seguradoraPayment = appointment.payments.find(p => p.payer === "seguradora");
+
+        setPaymentStatus({
+            paciente: pacientePayment?.status || "pendente",
+            seguradora: seguradoraPayment?.status || "pendente",
+        });
+
+        setShowPaymentModal(true);
+    };
+    const [paymentStatus, setPaymentStatus] = useState({
+        paciente: null,
+        seguradora: null,
+    });
+
+    const updateLocalStatus = (payer, value) => {
+        setPaymentStatus(prev => ({ ...prev, [payer]: value }));
+    };
+
+    const savePaymentsStatus = () => {
+        router.patch(
+            route('secretary.appointments.payments.update-both-status', selectedAppointment.id),
+            paymentStatus,
+            {
+                onSuccess: () => {
+                    setShowPaymentModal(false);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Status atualizado!',
+                    });
+                },
+
+                onError: (errors) => {
+                    // Monta mensagem com TODOS os erros
+                    let message = Object.values(errors).join('<br>');
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro ao atualizar pagamento',
+                        html: message, // usa html para múltiplas linhas
+                    });
+                }
+            }
+        );
+    };
+
 
     return (
         <DashboardLayout title="Agendamentos">
@@ -190,9 +242,7 @@ export default function IndexAppointments() {
                             </button>
                         </div>
                     </form>
-
-
-
+                    
                     <PaginatedTable columns={[
                         { label: 'ID', key: 'id' },
                         { label: 'Paciente', render: a => a.patient?.name || '-' },
@@ -213,16 +263,104 @@ export default function IndexAppointments() {
                                           className="text-primary hover:underline mr-4">
                                         <EditIcon/>
                                     </Link>
+                                    {a.payment_method === 'parcial' && (
+                                        <button
+                                            onClick={() => openPaymentsModal(a)}
+                                            className="text-green-500 underline mr-4"
+                                        >
+                                            <BankNote/>
+                                        </button>
+                                    )}
                                     <button onClick={() => handleDelete(a.id)} className="text-red-500
                                      hover:underline">
                                         <DeleteIcon/>
                                     </button>
+                                    
                                 </div>
                             )
                         }
                     ]} data={appointments.data} links={appointments.links} />
                 </div>
             </div>
+            {/* Modal de Pagamentos */}
+            {showPaymentModal && selectedAppointment && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-lg">
+
+                        <h2 className="text-xl font-bold mb-4">
+                            Pagamentos do Agendamento #{selectedAppointment.id}
+                        </h2>
+
+                        {/* 🔹 PAGAMENTO DO PACIENTE */}
+                        <div className="border rounded-lg p-4 mb-4">
+                            <h3 className="font-semibold mb-2">Paciente</h3>
+
+                            {selectedAppointment.payments
+                                .filter(p => p.payer === "paciente")
+                                .map(p => (
+                                    <div key={p.id} className="space-y-3">
+                                        <p>Valor: <strong>{p.amount} MT</strong></p>
+
+                                        <label className="block text-sm font-medium">Status</label>
+                                        <select
+                                            className="mt-1 block w-full h-10 px-3 border border-gray-300 rounded-md 
+                                                shadow-sm dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary focus:border-0 "
+                                            value={paymentStatus.paciente}
+                                            onChange={(e) => updateLocalStatus("paciente", e.target.value)}
+                                        >
+                                            <option value="pendente">Pendente</option>
+                                            <option value="pago">Pago</option>
+                                            <option value="reembolsado">Reembolsado</option>
+                                        </select>
+                                    </div>
+                                ))}
+                        </div>
+
+                        {/* 🔹 PAGAMENTO DA SEGURADORA */}
+                        <div className="border rounded-lg p-4">
+                            <h3 className="font-semibold mb-2">Seguradora</h3>
+
+                            {selectedAppointment.payments
+                                .filter(p => p.payer === "seguradora")
+                                .map(p => (
+                                    <div key={p.id} className="space-y-3">
+                                        <p>Valor: <strong>{p.amount} MT</strong></p>
+
+                                        <label className="block text-sm font-medium">Status</label>
+                                        <select
+                                            className="mt-1 block w-full h-10 px-3 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 
+                                            dark:text-white focus:ring-2 focus:ring-primary focus:border-0 "
+                                            value={paymentStatus.seguradora ?? p.status}
+                                            onChange={(e) => updateLocalStatus("seguradora", e.target.value)}
+                                        >
+                                            <option value="pendente">Pendente</option>
+                                            <option value="pago">Pago</option>
+                                            <option value="reembolsado">Reembolsado</option>
+                                        </select>
+                                    </div>
+                                ))}
+                        </div>
+
+                        {/* Botões */}
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowPaymentModal(false)}
+                                className="px-4 py-2 bg-gray-400 text-white rounded"
+                            >
+                                Fechar
+                            </button>
+
+                            <button
+                                onClick={savePaymentsStatus}
+                                className="px-4 py-2 bg-primary text-white rounded"
+                            >
+                                Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </DashboardLayout>
     );
 }

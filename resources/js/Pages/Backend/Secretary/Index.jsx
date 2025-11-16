@@ -1,6 +1,6 @@
 import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import { Link } from '@inertiajs/react';
-import { FaUserFriends, FaCalendarAlt, FaUserMd, FaMoneyBillWave } from 'react-icons/fa';
+import { FaUserFriends, FaCalendarAlt, FaUserMd, FaFileMedical } from 'react-icons/fa';
 
 export default function Dashboard() {
     const cards = [
@@ -17,6 +17,12 @@ export default function Dashboard() {
             description: 'Agendadas hoje',
             icon: <FaCalendarAlt className="text-primary text-5xl group-hover:text-white transition-colors" />,
             href: route('secretary.appointments.index'),
+        },
+        {
+            title: 'Documentação Médica',
+            description: 'Consultas já documentadas pelo médico',
+            icon: <FaFileMedical className="text-primary text-5xl group-hover:text-white transition-colors" />,
+            href: route('secretary.documentation.index'),
         },
         {
             title: 'Medicos',

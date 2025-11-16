@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-
+use App\Models\Secretary\Appointment;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -93,6 +93,22 @@ class User extends Authenticatable
             }
         });
     }
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class, 'doctor_id')  // para médicos
+            ->orWhere('patient_id', $this->id);               // para pacientes
+    }
+
+    public function doctorAppointments()
+    {
+        return $this->hasMany(Appointment::class, 'doctor_id');
+    }
+
+    public function patientAppointments()
+    {
+        return $this->hasMany(Appointment::class, 'patient_id');
+    }
+
 
     /**
      * Gera o código de paciente (patient_id) com base no ano e sequência.

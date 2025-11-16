@@ -3,6 +3,7 @@ import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import Swal from 'sweetalert2';
 import { FaStethoscope } from 'react-icons/fa';
 import { EditIcon, DeleteIcon } from "@/Components/Backend/HeroIcons";
+
 export default function IndexServices() {
     const { service, category } = usePage().props;
 
@@ -44,26 +45,32 @@ export default function IndexServices() {
         <DashboardLayout title="Serviços">
             <div className="max-w-7xl mx-auto px-4 py-10">
                 {/* Cabeçalho */}
-                <div className="flex justify-between items-center mb-6">
-                    <Link href={route('admin.dashboard')} className="text-gray-600 dark:text-gray-300 hover:underline">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 w-full">
+                    <Link 
+                        href={route('admin.dashboard')} 
+                        className="text-gray-600 dark:text-gray-300 hover:underline w-full sm:w-auto"
+                    >
                         &larr; Voltar
                     </Link>
-                </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-                            Serviços da Clínica
-                        </h2>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <Link
+                            href={route('admin.services.category.index')}
+                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition w-full sm:w-auto text-center"
+                        >
+                            Categorias
+                        </Link>
 
                         <Link
                             href={route('admin.services.create')}
-                            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition"
+                            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition w-full sm:w-auto text-center"
                         >
                             Novo Serviço
                         </Link>
                     </div>
+                </div>
 
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
                     {/* Cards */}
                     {service.length === 0 ? (
                         <p className="text-gray-500 dark:text-gray-400">Nenhum serviço cadastrado.</p>

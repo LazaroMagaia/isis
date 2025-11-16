@@ -8,4 +8,9 @@ class ServiceCategory extends Model
 {
     protected $fillable = ['name', 'slug', 'description','is_active'];
 
+    public function services()
+    {
+        return $this->hasMany(Service::class, 'category_id');
+    }
+
 }

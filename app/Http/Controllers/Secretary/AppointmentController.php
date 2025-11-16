@@ -12,6 +12,8 @@ use App\Models\Admin\Service;
 use Illuminate\Support\Facades\Auth;
 use App\Models\DoctorAvailabilitySlot;
 use App\Models\Secretary\DoctorAvailabilityDate;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Carbon;
 class AppointmentController extends Controller
 {
     protected $route = 'Backend/Secretary/Appointment';
@@ -28,7 +30,7 @@ class AppointmentController extends Controller
             ->get();
 
         // Query base
-        $baseQuery = Appointment::with(['patient', 'doctor', 'service','slot'])
+        $baseQuery = Appointment::with(['patient', 'doctor', 'service','slot','payments'])
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->whereHas('patient', fn($p) => $p->where('name', 'like', "%{$search}%"))
@@ -69,17 +71,17 @@ class AppointmentController extends Controller
             ],
         ]);
     }
-
     // Retorna datas disponíveis de um médico
     public function availableDates($doctorId)
     {
         $dates = DoctorAvailabilityDate::whereHas('availability', function($q) use ($doctorId) {
-            $q->where('doctor_id', $doctorId)
-              ->where('is_active', true)
-              ->where('type', 'specific_date');
-        })
-        ->orderBy('date')
-        ->get(['id', 'date']);
+                $q->where('doctor_id', $doctorId)
+                ->where('is_active', true)
+                ->where('type', 'specific_date');
+            })
+            ->where('date', '>=', Carbon::today()) // Filtra datas futuras ou hoje
+            ->orderBy('date')
+            ->get(['id', 'date']);
 
         return response()->json($dates);
     }
@@ -130,36 +132,44 @@ class AppointmentController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+       $validated = $request->validate([
             'patient_id' => 'required|exists:users,id',
             'doctor_id' => 'nullable|exists:users,id',
             'service_id' => 'required|exists:services,id',
             'origin' => 'required|in:online,presencial,medico',
             'date' => 'required|date',
-            'slot_id' => 'required|exists:doctor_availability_slots,id', // slot selecionado
+            'slot_id' => [
+                'required',
+                'exists:doctor_availability_slots,id',
+                Rule::unique('appointments')->where(function ($query) use ($request) {
+                    return $query->where('date', $request->date);
+                }),
+            ],
             'discount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
-            'payment_method' => 'nullable|string|max:100',
+            'payment_method' => 'required|string|max:100',
+            'paid_amount' => 'nullable|numeric|min:0',
+        ], [
+            'slot_id.unique' => 'Este horário já está reservado para a data selecionada.',
         ]);
 
-        // 🔹 Busca o slot para pegar start_time e end_time
         $slot = DoctorAvailabilitySlot::findOrFail($validated['slot_id']);
-
-        // 🔹 Busca o serviço para calcular valores
         $service = Service::findOrFail($validated['service_id']);
         $amount = $service->price ?? 0;
         $discount = $validated['discount'] ?? 0;
 
-        // 🔹 Calcula o valor final considerando percentual
         $finalAmount = max($amount - ($amount * $discount / 100), 0);
 
-        // 🔹 Determina o status inicial
-        $status = null;
+        $paymentStatus = 'pendente';
+        $status = 'solicitado';
+
         if ($validated['payment_method'] === 'dinheiro') {
+            $paymentStatus = 'pago';
             $status = 'aprovado';
+        } elseif ($validated['payment_method'] === 'parcial') {
+            $paymentStatus = 'parcial';
         }
 
-        // 🔹 Cria o agendamento
         $appointment = Appointment::create([
             'patient_id' => $validated['patient_id'],
             'doctor_id' => $validated['doctor_id'] ?? null,
@@ -169,22 +179,53 @@ class AppointmentController extends Controller
             'date' => $validated['date'],
             'discount' => $discount,
             'amount' => $finalAmount,
-            'payment_method' => $validated['payment_method'] ?? null,
-            'status' => $status ?? 'solicitado',
-            'payment_status' => 'pendente',
+            'payment_method' => $validated['payment_method'],
+            'payment_status' => $paymentStatus,
+            'status' => $status,
             'notes' => $validated['notes'] ?? null,
-            'slot_id' =>$validated['slot_id']
+            'slot_id' => $validated['slot_id'],
         ]);
 
-        // 🔹 Marca o slot como reservado
+        // marca slot como reservado
         $slot->update(['is_booked' => true]);
+
+        // Se pagamento parcial, cria os dois registros
+        if ($validated['payment_method'] === 'parcial') {
+
+            $paidByPatient = floatval($validated['paid_amount'] ?? 0);
+            $total = floatval($finalAmount);
+
+            // Valor pago pelo paciente (limitado ao total)
+            $patientAmount = min($paidByPatient, $total);
+
+            // Valor pago pela seguradora
+            $insuranceAmount = max($total - $patientAmount, 0);
+
+            // 🔹 Registro do paciente
+            $appointment->payments()->create([
+                'amount' => $patientAmount,
+                'payer' => 'paciente',
+                'payment_method' => $validated['payment_method'] ?? null,
+                'status' => 'pendente',
+                'verified_by' => null,
+            ]);
+
+            // 🔹 Registro da seguradora
+            $appointment->payments()->create([
+                'amount' => $insuranceAmount,
+                'payer' => 'seguradora',
+                'payment_method' => null, // seguradora não escolhe método aqui
+                'status' => 'pendente',
+                'verified_by' => null,
+            ]);
+        }
+
 
         return redirect()->back()->with('success', 'Agendamento criado com sucesso!');
     }
-
     public function edit($id)
     {
-        $appointment = Appointment::findOrFail($id);
+        $appointment = Appointment::with(['patient', 'doctor', 'service','slot','payments'])->findOrFail($id);
 
         $services = Service::all();
         $patients = User::where('role', 'patient')->get();
@@ -209,7 +250,7 @@ class AppointmentController extends Controller
     /**
      * Atualiza um agendamento existente
      */
-   public function update(Request $request, $id)
+    public function update(Request $request, $id)
     {
         $appointment = Appointment::findOrFail($id);
 
@@ -222,46 +263,40 @@ class AppointmentController extends Controller
             'slot_id' => 'nullable|exists:doctor_availability_slots,id',
             'status' => 'nullable|in:solicitado,aguardando_pagamento,aprovado,cancelado,concluido',
             'discount' => 'nullable|numeric|min:0',
-            'payment_status' => 'nullable|in:pendente,pago,reembolsado',
+            'payment_status' => 'nullable|in:pendente,pago,parcial,reembolsado',
             'payment_method' => 'nullable|string|max:100',
+            'paid_amount' => 'nullable|numeric|min:0', // pago pelo paciente se parcial
             'notes' => 'nullable|string',
         ]);
 
-        // 🔹 Se a data mudou, slot_id é obrigatório
+        // valida slot se data mudou
         if (isset($validated['date']) && $validated['date'] != $appointment->date && empty($validated['slot_id'])) {
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['slot_id' => 'A hora é obrigatória quando a data é alterada.']);
         }
 
-        // 🔹 Recalcula valor final
-        if (isset($validated['service_id'])) {
-            $service = Service::findOrFail($validated['service_id']);
-            $amount = $service->price ?? $appointment->amount;
-        } else {
-            $amount = $appointment->amount;
-        }
+        // recalcula valor
+        $amount = isset($validated['service_id']) 
+            ? (Service::findOrFail($validated['service_id'])->price ?? $appointment->amount) 
+            : $appointment->amount;
+
         $discount = $validated['discount'] ?? $appointment->discount;
         $finalAmount = max($amount - ($amount * $discount / 100), 0);
 
-        // 🔹 Atualiza slot apenas se enviado e diferente do atual
+        // Atualiza slot se necessário
         if (isset($validated['slot_id']) && $validated['slot_id'] != $appointment->slot_id) {
-            // Libera slot antigo
             if ($appointment->slot_id) {
                 $oldSlot = DoctorAvailabilitySlot::find($appointment->slot_id);
-                if ($oldSlot) {
-                    $oldSlot->update(['is_booked' => false]);
-                }
+                if ($oldSlot) $oldSlot->update(['is_booked' => false]);
             }
-
-            // Reserva novo slot
             $newSlot = DoctorAvailabilitySlot::findOrFail($validated['slot_id']);
             $newSlot->update(['is_booked' => true]);
         } else {
             unset($validated['slot_id']);
         }
 
-        // 🔹 Atualiza status especiais
+        // status especiais
         if (($validated['status'] ?? null) === 'aprovado' && !$appointment->approved_at) {
             $validated['approved_at'] = now();
         }
@@ -269,13 +304,60 @@ class AppointmentController extends Controller
             $validated['completed_at'] = now();
         }
 
-        // 🔹 Atualiza o agendamento
+        // Atualiza o agendamento
         $appointment->update(array_merge($validated, [
             'amount' => $finalAmount,
         ]));
 
+        // Atualiza pagamento parcial
+        if (($validated['payment_method'] ?? null) === 'parcial' && isset($validated['paid_amount'])) {
+
+            // 🔹 Valor pago pelo paciente (limitado ao valor final)
+            $patientAmount = min($validated['paid_amount'], $finalAmount);
+
+            // 🔹 Valor pago pela seguradora (restante)
+            $insuranceAmount = max($finalAmount - $patientAmount, 0);
+
+            /*
+            |--------------------------------------------------------------------------
+            | 1) Registrar / atualizar pagamento do PACIENTE
+            |--------------------------------------------------------------------------
+            */
+            $appointment->payments()->updateOrCreate(
+                ['payer' => 'paciente'], // condição
+                [
+                    'amount' => $patientAmount,
+                    'method' => 'patient',
+                    'paid_by' => 'patient',
+                ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | 2) Registrar / atualizar pagamento da SEGURADORA
+            |--------------------------------------------------------------------------
+            */
+            $appointment->payments()->updateOrCreate(
+                ['payer' => 'seguradora'], // condição
+                [
+                    'amount' => $insuranceAmount,
+                    'method' => 'insurance',
+                    'paid_by' => 'insurance',
+                ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | 3) Atualiza o status do pagamento
+            |--------------------------------------------------------------------------
+            */
+            $appointment->update(['payment_status' => 'parcial']);
+        }
+
+
         return redirect()->back()->with('success', 'Agendamento atualizado com sucesso!');
     }
+
     public function destroy($id)
     {
         $appointment = Appointment::findOrFail($id);
