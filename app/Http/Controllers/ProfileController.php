@@ -12,15 +12,29 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 class ProfileController extends Controller
-{
+{   
     /**
      * Display the user's profile form.
      */
     public function edit(Request $request): Response
     {
-        return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+        $user = $request->user();
+
+        // Determina a rota de edição de perfil baseado no role
+        $routeName = match ($user->role) {
+            'admin' => 'admin.profile.edit',
+            'doctor' => 'doctor.profile.edit',
+            'nurse' => 'nurse.profile.edit',
+            'secretary' => 'secretary.profile.edit',
+            'patient' => 'patient.profile.edit',
+            default => 'profile.edit',
+        };
+
+        return Inertia::render('Backend/Profile/Edit', [
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
+            'user' => $user,
+            'editRoute' => $routeName, // rota dinâmica para o front-end
         ]);
     }
 
@@ -29,15 +43,28 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Prepara os dados validados
+        $data = $request->validated();
+
+        // Converte specialties de string para array JSON
+        if (isset($data['specialties'])) {
+            // Remove espaços extras e transforma em array
+            $specialtiesArray = array_filter(array_map('trim', explode(',', $data['specialties'])));
+            // Converte em JSON
+            $data['specialties'] = json_encode($specialtiesArray);
         }
 
-        $request->user()->save();
+        $user->fill($data);
+        // Reseta verificação de email se alterado
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
 
-        return Redirect::route('profile.edit');
+        $user->save();
+
+        return redirect()->back()->with('status', 'profile-updated');
     }
 
     /**
@@ -45,7 +72,7 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        $request->validate([
+        $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);
 

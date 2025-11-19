@@ -30,7 +30,4 @@ class MedicineBatches extends Model
     {
         return $this->hasMany(MedicineStockMovements::class, 'batch_id');
     }
-    public function batch() {
-        return $this->belongsTo(MedicineBatch::class);
-    }
 }

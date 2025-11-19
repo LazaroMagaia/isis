@@ -5,7 +5,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\Admin\{AdminController,TeamController,CategoryServiceController,ServiceController,
-    MedicineController,MedicineBatchController,MedicineStockMovementController,MedicineCategoryController};
+    MedicineController,MedicineBatchController,MedicineStockMovementController,MedicineCategoryController,
+    InvoiceController};
 
 Route::prefix('admin')
     ->name('admin.')
@@ -60,5 +61,11 @@ Route::prefix('admin')
         Route::get('/medicine-batches/{batch}/edit/{id}', [MedicineBatchController::class, 'edit'])->name('medicinebatches.edit');
         Route::put('/medicine-batches/{batch}', [MedicineBatchController::class, 'update'])->name('medicinebatches.update');
         Route::delete('/medicine-batches/{batch}', [MedicineBatchController::class, 'destroy'])->name('medicinebatches.destroy');
-
+        //InvoiceController
+        Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/invoices/show/{id}/show', [InvoiceController::class, 'show'])->name('invoices.show');
+        Route::post('/invoices/store', [InvoiceController::class, 'store'])->name('invoices.store');  
+        Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+        Route::get('/admin/invoices/{id}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+        Route::delete('/invoices/{invoice}/destroy', [InvoiceController::class, 'destroy'])->name('invoices.destroy'); 
     });

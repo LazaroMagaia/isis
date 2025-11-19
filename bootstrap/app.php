@@ -16,8 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
-
-        //
+        $middleware->alias([
+        'prevent.double.invoice' => \App\Http\Middleware\PreventDoubleInvoice::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

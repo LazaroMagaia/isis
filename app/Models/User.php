@@ -17,7 +17,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         // Role
-        'role',
+        'role','specialties',
 
         // Basic information
         'patient_id',

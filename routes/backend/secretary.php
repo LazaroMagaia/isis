@@ -4,7 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\Secretary\{SecretaryController,UsersController,AppointmentController,
+use App\Http\Controllers\Secretary\{SecretaryController,UsersController,AppointmentController,InvoiceController,
     DoctorAvailabilityController,DocumentationController,PrescriptionController,AppointmentPaymentController};
 
 Route::prefix('secretary')
@@ -61,7 +61,27 @@ Route::prefix('secretary')
         //PrescriptionController
         Route::post('prescription/documentation/{id}/prescription-store', [PrescriptionController::class, 'prescriptionStore'])
             ->name('documentation.prescription-store');
+
+        Route::post('prescription/prescription-invoice/documentation/{id}/prescription-invoice', 
+            [PrescriptionController::class, 'prescriptionInvoice'])
+            ->name('documentation.prescription-invoice');
+        Route::get('prescription/prescription-invoice/documentation/{id}/prescription-invoice/download', 
+            [PrescriptionController::class, 'prescriptionInvoiceDownload'])
+            ->name('documentation.prescription-invoice.download');    
         //PrescriptionController PDF generation route
         Route::get('prescription/documentation/{id}/prescription-pdf', [PrescriptionController::class, 'prescriptionPDF'])
             ->name('documentation.prescription-pdf');
+
+        //Faturacao 
+        Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/invoices/{invoice}/show', [InvoiceController::class, 'show'])->name('invoices.show');
+        Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+        Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+        Route::get('/secretary/invoices/{id}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+        Route::delete('/invoices/{invoice}/destroy', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
+
+        //Profiles
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
     });

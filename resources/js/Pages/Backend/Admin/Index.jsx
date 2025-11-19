@@ -1,6 +1,6 @@
 import DashboardLayout from '@/Layouts/AuthenticatedLayout.jsx';
 import { Link } from '@inertiajs/react';
-import { FaUserFriends, FaPills, FaUsers, FaStethoscope } from 'react-icons/fa';
+import { FaUserFriends, FaPills, FaUsers, FaStethoscope,FaMoneyBillWave } from 'react-icons/fa';
 
 export default function Dashboard() {
     const cards = [
@@ -31,7 +31,14 @@ export default function Dashboard() {
             description: 'Este mês',
             icon: <FaStethoscope className="text-primary text-5xl group-hover:text-white transition-colors" />,
             href: route('admin.services.index'),
-        }
+        },
+        // --- NOVO MENU ADICIONADO AQUI ---
+        {
+            title: 'Faturação',
+            description: 'Gestão de pagamentos e faturas',
+            icon: <FaMoneyBillWave className="text-primary text-5xl group-hover:text-white transition-colors" />,
+            href: route('admin.invoices.index'), // ajuste para seu nome real da rota
+        },
     ];
 
     return (
@@ -42,7 +49,8 @@ export default function Dashboard() {
                         <Link
                             key={index}
                             href={card.href}
-                            className="group w-full bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl p-6 flex flex-col justify-between transition-all hover:bg-primary hover:text-white cursor-pointer min-h-[180px]"
+                            className="group w-full bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl p-6 flex flex-col
+                                justify-between transition-all hover:bg-primary hover:text-white cursor-pointer min-h-[180px]"
                         >
                             <div className="flex flex-col items-center justify-center flex-1">
                                 <div className="mb-4">{card.icon}</div>
